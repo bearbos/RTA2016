@@ -3,13 +3,14 @@
 
 #include "stdafx.h"
 #include "RTA2016.h"
+#include "Renderer.h"
 #define MAX_LOADSTRING 100
 
 // Global Variables:
 HINSTANCE hInst;								// current instance
 TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
 TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
-
+Renderer renderer;
 // Forward declarations of functions included in this code module:
 ATOM				MyRegisterClass(HINSTANCE hInstance);
 BOOL				InitInstance(HINSTANCE, int);
@@ -105,7 +106,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    {
       return FALSE;
    }
-
+   RECT tempRect;
+   GetWindowRect(hWnd, &tempRect);
+   renderer.Initialize(hWnd, tempRect.top - tempRect.bottom, tempRect.right - tempRect.left);
    ShowWindow(hWnd, nCmdShow);
    UpdateWindow(hWnd);
 
