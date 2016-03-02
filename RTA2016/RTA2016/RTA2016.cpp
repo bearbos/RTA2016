@@ -10,7 +10,6 @@
 HINSTANCE hInst;								// current instance
 TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
 TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
-Renderer renderer;
 // Forward declarations of functions included in this code module:
 ATOM				MyRegisterClass(HINSTANCE hInstance);
 BOOL				InitInstance(HINSTANCE, int);
@@ -24,7 +23,6 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 {
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
-
  	// TODO: Place code here.
 	MSG msg;
 	HACCEL hAccelTable;
@@ -45,6 +43,9 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	// Main message loop:
 	while (GetMessage(&msg, NULL, 0, 0))
 	{
+		float clear[4] = {0,0,0,1};
+		Renderer::ClearScreenToColor(clear);
+		Renderer::Render();
 		if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
 		{
 			TranslateMessage(&msg);
@@ -108,7 +109,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    }
    RECT tempRect;
    GetWindowRect(hWnd, &tempRect);
-   renderer.Initialize(hWnd, tempRect.top - tempRect.bottom, tempRect.right - tempRect.left);
+   Renderer::Initialize(hWnd, -tempRect.top + tempRect.bottom, tempRect.right - tempRect.left);
    ShowWindow(hWnd, nCmdShow);
    UpdateWindow(hWnd);
 

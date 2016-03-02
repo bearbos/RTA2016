@@ -25,3 +25,10 @@
 #pragma comment (lib, "d3d11.lib")
 #pragma comment (lib, "Winmm.lib")
 #include <DirectXMath.h>
+using namespace DirectX;
+#include "Renderer.h"
+
+#include "Defines.h"
+#include "RenderShape.h"
+#include "RenderMaterial.h"
+#include "RenderSet.h"
