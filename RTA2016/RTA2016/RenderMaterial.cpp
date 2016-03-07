@@ -9,4 +9,15 @@ RenderMaterial::RenderMaterial()
 
 RenderMaterial::~RenderMaterial()
 {
+	if (texture)
+		texture->Release();
+}
+
+void RenderMaterial::Process()
+{
+	Renderer::deviceContext->PSSetShaderResources(0, 1, &texture);
+	for (size_t i = 0; i < objects.size(); i++)
+	{
+		objects[i].Process();
+	}
 }

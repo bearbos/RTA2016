@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "Renderer.h"
+#include "VertexShader.csh"
+#include "PixelShader.csh"
 
+#define Release(x) { if(x) {x->Release(); x =0;} }
 ID3D11Device *Renderer::device = 0;
 IDXGISwapChain *Renderer::swapChain = 0;
 ID3D11DeviceContext *Renderer::deviceContext = 0;
@@ -13,7 +16,11 @@ XMFLOAT4X4 Renderer::viewMatrix;
 XMFLOAT4X4 Renderer::projMatrix;
 ID3D11Buffer *Renderer::viewProjConBuffer = 0;
 ID3D11Buffer *Renderer::worldCOnBuffer = 0;
-
+ID3D11InputLayout *Renderer::vertexLayout = 0;
+ID3D11VertexShader *Renderer::vertexShader = 0;
+ID3D11PixelShader *Renderer::pixelShader = 0;
+ID3D11SamplerState *Renderer::sampleState = 0;
+ID3D11RasterizerState *Renderer::rasterState = 0;
 void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int windWidth)
 {
 	DXGI_SWAP_CHAIN_DESC chainDesc;
@@ -35,8 +42,7 @@ void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int win
 	ID3D11Resource *temp = nullptr;
 	swapChain->GetBuffer(0, __uuidof(ID3D11Resource), (void**)&temp);
 	hResult = device->CreateRenderTargetView(temp, NULL, &renderTargetView);
-	if (temp)
-		temp->Release();
+	Release(temp);
 	mainViewPort.TopLeftX = 0;
 	mainViewPort.TopLeftY = 0;
 	mainViewPort.MaxDepth = 1;
@@ -77,7 +83,7 @@ void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int win
 	XMStoreFloat4x4(&projMatrix, tempMatrix);
 	float yscale = 1.0f / tan(((90 / 2) * 3.14159f) / 180);
 	float xScale = yscale / ((float)windWidth / ((float)windHeight / 2.0f));
-	
+
 	projMatrix._11 = xScale;
 	projMatrix._22 = yscale;
 	projMatrix._33 = 100 / (100 - 0.1f);
@@ -94,6 +100,43 @@ void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int win
 	worldConBuffDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	worldConBuffDesc.ByteWidth = sizeof(XMFLOAT4X4);
 	device->CreateBuffer(&worldConBuffDesc, NULL, &worldCOnBuffer);
+
+	D3D11_INPUT_ELEMENT_DESC layoutDesc[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "NORMALS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "UV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+	};
+
+	hResult = device->CreateInputLayout(layoutDesc, 3, VertexShader, sizeof(VertexShader), &vertexLayout);
+	hResult = device->CreatePixelShader(PixelShader, sizeof(PixelShader), NULL, &pixelShader);
+	hResult = device->CreateVertexShader(VertexShader, sizeof(VertexShader), NULL, &vertexShader);
+
+	D3D11_SAMPLER_DESC sampleDesc;
+	SecureZeroMemory(&sampleDesc, sizeof(sampleDesc));
+	sampleDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	sampleDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampleDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampleDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampleDesc.MinLOD = -FLT_MAX;
+	sampleDesc.MaxLOD = FLT_MAX;
+	sampleDesc.MaxAnisotropy = 1;
+	sampleDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	hResult = device->CreateSamplerState(&sampleDesc, &sampleState);
+
+	D3D11_RASTERIZER_DESC rasterDesc;
+	SecureZeroMemory(&rasterDesc, sizeof(rasterDesc));
+	rasterDesc.AntialiasedLineEnable = true;
+	rasterDesc.FillMode = D3D11_FILL_SOLID;
+	rasterDesc.CullMode = D3D11_CULL_BACK;
+	rasterDesc.FrontCounterClockwise = false;
+	rasterDesc.DepthBias = 0;
+	rasterDesc.SlopeScaledDepthBias = 0.0f;
+	rasterDesc.DepthBiasClamp = 0.0f;
+	rasterDesc.DepthClipEnable = true;
+	rasterDesc.ScissorEnable = false;
+	rasterDesc.MultisampleEnable = false;
+	hResult = device->CreateRasterizerState(&rasterDesc, &rasterState);
 }
 
 
@@ -114,6 +157,12 @@ void Renderer::ClearScreenToColor(float * color)
 }
 void Renderer::Render()
 {
+	deviceContext->VSSetShader(vertexShader, NULL, 0);
+	deviceContext->PSSetShader(pixelShader, NULL, 0);
+	deviceContext->PSSetSamplers(0, 1, &sampleState);
+	deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	deviceContext->RSSetState(rasterState);
+
 	D3D11_MAPPED_SUBRESOURCE VPSubResource;
 	deviceContext->Map(viewProjConBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &VPSubResource);
 	ViewProjectionMatrixs *VramVP;
@@ -124,4 +173,22 @@ void Renderer::Render()
 	deviceContext->VSSetConstantBuffers(1, 1, &viewProjConBuffer);
 
 	swapChain->Present(0, 0);
-}	
+}
+
+void Renderer::ShutDown()
+{
+	Release(device);
+	Release(swapChain);
+	Release(deviceContext);
+	Release(renderTargetView);
+	Release(backBufferView);
+	Release(depthStencilPointer);
+	Release(depthStencilViewport);
+	Release(viewProjConBuffer);
+	Release(worldCOnBuffer);
+	Release(vertexLayout);
+	Release(vertexShader);
+	Release(pixelShader);
+	Release(sampleState);
+	Release(rasterState);
+}

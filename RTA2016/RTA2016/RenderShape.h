@@ -2,9 +2,10 @@
 #include "stdafx.h"
 class RenderShape
 {
-	std::vector<XMFLOAT4X4> objectsWorlds;
+	XMFLOAT4X4 objectsWorld;
 	unsigned int numIndices, startIndexLocation, startVertLocation;
 public:
+	RenderShape();
 	void Process();
 	void AddObjectsMatrix(XMFLOAT4X4 _objToAdd);
 };
