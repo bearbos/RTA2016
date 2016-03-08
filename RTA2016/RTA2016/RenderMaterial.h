@@ -8,5 +8,7 @@ public:
 	RenderMaterial();
 	~RenderMaterial();
 	void Process();
+	inline void AddShape(RenderShape _object) { objects.push_back(_object); }
+	void Shutdown();
 };
 

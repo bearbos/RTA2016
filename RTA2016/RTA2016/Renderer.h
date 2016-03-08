@@ -18,10 +18,10 @@ public:
 	static ID3D11SamplerState *sampleState;
 	static ID3D11RasterizerState *rasterState;
 	static D3D11_VIEWPORT mainViewPort;
-
+	static ID3D11BlendState *blendState;
 	static XMFLOAT4X4 viewMatrix;
 	static XMFLOAT4X4 projMatrix;
-	std::vector<RenderSet> meshes;
+	static std::vector<RenderSet> meshes;
 
 	Renderer();
 	~Renderer();

@@ -21,6 +21,8 @@ ID3D11VertexShader *Renderer::vertexShader = 0;
 ID3D11PixelShader *Renderer::pixelShader = 0;
 ID3D11SamplerState *Renderer::sampleState = 0;
 ID3D11RasterizerState *Renderer::rasterState = 0;
+std::vector<RenderSet> Renderer::meshes;
+ID3D11BlendState *Renderer::blendState = 0;
 void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int windWidth)
 {
 	DXGI_SWAP_CHAIN_DESC chainDesc;
@@ -81,8 +83,8 @@ void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int win
 
 	XMMATRIX tempMatrix = XMMatrixIdentity();
 	XMStoreFloat4x4(&projMatrix, tempMatrix);
-	float yscale = 1.0f / tan(((90 / 2) * 3.14159f) / 180);
-	float xScale = yscale / ((float)windWidth / ((float)windHeight / 2.0f));
+	float yscale = 1.0f / tan(0.785398f);
+	float xScale = yscale / ((float)windWidth / ((float)windHeight));
 
 	projMatrix._11 = xScale;
 	projMatrix._22 = yscale;
@@ -92,6 +94,8 @@ void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int win
 	projMatrix._34 = 1;
 
 	XMStoreFloat4x4(&viewMatrix, tempMatrix);
+	viewMatrix._43 = -1;
+	XMStoreFloat4x4(&viewMatrix, XMMatrixInverse(nullptr, XMLoadFloat4x4(&viewMatrix)));
 
 	D3D11_BUFFER_DESC worldConBuffDesc;
 	SecureZeroMemory(&worldConBuffDesc, sizeof(worldConBuffDesc));
@@ -137,6 +141,18 @@ void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int win
 	rasterDesc.ScissorEnable = false;
 	rasterDesc.MultisampleEnable = false;
 	hResult = device->CreateRasterizerState(&rasterDesc, &rasterState);
+
+	D3D11_BLEND_DESC blendDesc;
+	SecureZeroMemory(&blendDesc, sizeof(blendDesc));
+	blendDesc.RenderTarget[0].BlendEnable = true;
+	blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+	blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+	blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+	blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+	blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+	blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+	device->CreateBlendState(&blendDesc, &blendState);
 }
 
 
@@ -159,9 +175,11 @@ void Renderer::Render()
 {
 	deviceContext->VSSetShader(vertexShader, NULL, 0);
 	deviceContext->PSSetShader(pixelShader, NULL, 0);
-	deviceContext->PSSetSamplers(0, 1, &sampleState);
+	//deviceContext->PSSetSamplers(0, 1, &sampleState);
 	deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	deviceContext->RSSetState(rasterState);
+	deviceContext->IASetInputLayout(vertexLayout);
+	deviceContext->OMSetBlendState(blendState, nullptr, 0xFFFFFFFF);
 
 	D3D11_MAPPED_SUBRESOURCE VPSubResource;
 	deviceContext->Map(viewProjConBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &VPSubResource);
@@ -171,7 +189,10 @@ void Renderer::Render()
 	VramVP->viewMatrix = viewMatrix;
 	deviceContext->Unmap(viewProjConBuffer, NULL);
 	deviceContext->VSSetConstantBuffers(1, 1, &viewProjConBuffer);
-
+	for (size_t i = 0; i < meshes.size(); i++)
+	{
+		meshes[i].Process();
+	}
 	swapChain->Present(0, 0);
 }
 
@@ -191,4 +212,8 @@ void Renderer::ShutDown()
 	Release(pixelShader);
 	Release(sampleState);
 	Release(rasterState);
+	for (size_t i = 0; i < meshes.size(); i++)
+	{
+		meshes[i].Shutdown();
+	}
 }

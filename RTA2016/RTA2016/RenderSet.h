@@ -11,4 +11,8 @@ public:
 	RenderSet();
 	~RenderSet();
 	void Process();
+	void SetVertexBuffer(std::vector<Vertex> _vertexes);
+	void SetIndexBuffer(std::vector<unsigned int> _indices);
+	inline void AddMaterial(RenderMaterial _mat){ texturesMaterials.push_back(_mat); }
+	void Shutdown();
 };

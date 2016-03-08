@@ -3,10 +3,10 @@
 class RenderShape
 {
 	XMFLOAT4X4 objectsWorld;
-	unsigned int numIndices, startIndexLocation, startVertLocation;
 public:
+	unsigned int numIndices, startIndexLocation, startVertLocation;
 	RenderShape();
 	void Process();
-	void AddObjectsMatrix(XMFLOAT4X4 _objToAdd);
+	void SetObjectsMatrix(XMFLOAT4X4 _objToAdd);
 };
 
