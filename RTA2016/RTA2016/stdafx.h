@@ -25,6 +25,8 @@
 #pragma comment (lib, "d3d11.lib")
 #pragma comment (lib, "Winmm.lib")
 #include <DirectXMath.h>
+#define FBXSDK_SHARED
+
 using namespace DirectX;
 #include "Renderer.h"
 
@@ -32,3 +34,13 @@ using namespace DirectX;
 #include "RenderShape.h"
 #include "RenderMaterial.h"
 #include "RenderSet.h"
+
+#include <stdint.h>
+#include <sys/stat.h>
+#include <time.h>
+#include <iostream>
+#include <fstream>
+#include <fbxsdk.h>
+#include "Mesh.h"
+
+#include "FBXLoader.h"

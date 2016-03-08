@@ -77,6 +77,10 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	Renderer::meshes.push_back(renderSet);
 	hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_RTA2016));
 	float clear[4] = { 0, 0, 0, 1 };
+	FBXLoader FBX_Loader;
+	FBX_Loader.ReadIn("FBXtoLoad.txt");
+	FBX_Loader.FBXBinaryCheck();
+
 	// Main message loop:
 	while (GetMessage(&msg, NULL, 0, 0))
 	{
