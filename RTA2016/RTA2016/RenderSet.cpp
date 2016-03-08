@@ -24,14 +24,14 @@ void RenderSet::Process()
 	}
 }
 
-void RenderSet::SetVertexBuffer(std::vector<Vertex> _vertexes)
+void RenderSet::SetVertexBuffer(std::vector<uniqueVertex> _vertexes)
 {
 	D3D11_BUFFER_DESC buffDesc;
 	SecureZeroMemory(&buffDesc, sizeof(buffDesc));
 	buffDesc.Usage = D3D11_USAGE_IMMUTABLE;
 	buffDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	buffDesc.CPUAccessFlags = NULL;
-	buffDesc.ByteWidth = sizeof(Vertex) * (int)_vertexes.size();
+	buffDesc.ByteWidth = sizeof(uniqueVertex) * (int)_vertexes.size();
 
 	D3D11_SUBRESOURCE_DATA buffData;
 	buffData.pSysMem = &_vertexes[0];

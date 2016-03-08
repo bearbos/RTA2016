@@ -9,8 +9,8 @@ struct ViewProjectionMatrixs
 struct uniqueVertex
 {
 	XMFLOAT4 position;
-	XMFLOAT2 texture;
 	XMFLOAT4 normal;
+	XMFLOAT2 texture;
 };
 struct Vertex
 {

@@ -37,44 +37,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	{
 		return FALSE;
 	}
-	std::vector<Vertex> triangles;
-	std::vector<unsigned int> indices;
 
-	for (size_t i = 0; i < 3; i++)
-	{
-		Vertex temp;
-		temp.pos.x = -0.5 + (i * 0.5f);
-		temp.pos.y = 0;
-		temp.pos.z = 0;
-		temp.pos.w = 1;
-		temp.uv.x = 0;
-		temp.uv.y = 0;
-		temp.norm.x = 1;
-		temp.norm.y = 0;
-		temp.norm.z = 0;
-		temp.norm.w = 0;
-		triangles.push_back(temp);
-	}
-	indices.push_back(0);
-	indices.push_back(2);
-	indices.push_back(1);
-	triangles[1].pos.y = 0.5f;
-	RenderSet renderSet;
-	renderSet.SetIndexBuffer(indices);
-	renderSet.SetVertexBuffer(triangles);
-
-	RenderMaterial temp;
-	RenderShape shape;
-
-	XMFLOAT4X4 objectMatrix;
-	XMMATRIX tempMatrix = XMMatrixIdentity();
-	XMStoreFloat4x4(&objectMatrix, tempMatrix);
-	shape.SetObjectsMatrix(objectMatrix);
-	shape.numIndices = 3;
-
-	temp.AddShape(shape);
-	renderSet.AddMaterial(temp);
-	Renderer::meshes.push_back(renderSet);
 	hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_RTA2016));
 	float clear[4] = { 0, 0, 0, 1 };
 	FBXLoader FBX_Loader;
