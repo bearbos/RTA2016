@@ -109,7 +109,9 @@
     <ClInclude Include="Defines.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Renderer.h" />
+    <ClInclude Include="RenderFunctions.h" />
     <ClInclude Include="RenderMaterial.h" />
+    <ClInclude Include="RenderNode.h" />
     <ClInclude Include="RenderSet.h" />
     <ClInclude Include="RenderShape.h" />
     <ClInclude Include="Resource.h" />

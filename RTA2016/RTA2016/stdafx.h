@@ -44,3 +44,5 @@ using namespace DirectX;
 #include "Mesh.h"
 
 #include "FBXLoader.h"
+#include "..\DirectXTK-feb2016\Inc\DDSTextureLoader.h"
+#include "RenderNode.h"

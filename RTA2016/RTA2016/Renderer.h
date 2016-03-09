@@ -1,5 +1,6 @@
 #pragma once
 class RenderSet;
+class RenderNode;
 class Renderer
 {
 public:
@@ -7,7 +8,6 @@ public:
 	static IDXGISwapChain *swapChain;
 	static ID3D11DeviceContext *deviceContext;
 	static ID3D11RenderTargetView *renderTargetView;
-	static ID3D11Texture2D *backBufferView;
 	static ID3D11Texture2D *depthStencilPointer;
 	static ID3D11DepthStencilView *depthStencilViewport;
 	static ID3D11Buffer *viewProjConBuffer;
@@ -22,6 +22,7 @@ public:
 	static XMFLOAT4X4 viewMatrix;
 	static XMFLOAT4X4 projMatrix;
 	static std::vector<RenderSet> meshes;
+	static RenderNode *head;
 
 	Renderer();
 	~Renderer();

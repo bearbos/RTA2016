@@ -39,7 +39,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	}
 
 	hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_RTA2016));
-	float clear[4] = { 0, 0, 0, 1 };
+	float clear[4] = { 0.25f, 0.25f, 0.25, 1 };
 	FBXLoader FBX_Loader;
 	FBX_Loader.ReadIn("FBXtoLoad.txt");
 	FBX_Loader.FBXBinaryCheck();

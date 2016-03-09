@@ -27,8 +27,8 @@ V_OUT main( V_IN input )
 	localPos = mul(localPos, worldMatrix);
 	localPos = mul(localPos, viewMatrix);
 	localPos = mul(localPos, projectionMatrix);
-	outPut.uv = input.uv;
 	outPut.posH = localPos;
 	outPut.normals = input.normals;
+	outPut.uv = input.uv;
 	return outPut;
 }

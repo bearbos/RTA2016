@@ -1,5 +1,5 @@
 #include "FBXLoader.h"
-
+#include "RenderFunctions.h"
 FBXLoader::FBXLoader()
 {
 
@@ -344,7 +344,6 @@ void FBXLoader::LoadBinary(const char * _binName)
 		unsigned int numMeshes;
 		bin.read((char*)&numMeshes, sizeof(unsigned int));
 
-
 		for (unsigned int i = 0; i < numMeshes; i++)
 		{
 
@@ -382,10 +381,8 @@ void FBXLoader::LoadBinary(const char * _binName)
 
 			meshes.push_back(tempMesh);
 		}
-
 		bin.close();
 	}
-
 	for (size_t i = 0; i < meshes.size(); i++)
 	{
 		RenderSet renderSet;
@@ -407,19 +404,43 @@ void FBXLoader::LoadBinary(const char * _binName)
 			vertexes.push_back(tempVertex);
 		}
 		renderSet.SetVertexBuffer(vertexes);
+		RenderMesh *meshR = new RenderMesh;
+		//meshR->meshIndexBuffer = renderSet.meshIndexBuffer;
+		//meshR->meshVertexBuffer = renderSet.meshVertexBuffer;
+		meshR->stride = sizeof(uniqueVertex);
+		meshR->SetVertexBuffer(vertexes);
+		meshR->SetIndexBuffer(meshes[i].GetIndices());
+		meshR->func = RenderMeshes;
 
 		RenderMaterial temp;
 		RenderShape shape;
-
 		XMFLOAT4X4 objectMatrix;
 		XMMATRIX tempMatrix = XMMatrixIdentity();
+		//XMMATRIX tempMatrix = XMMatrixRotationY(XMConvertToRadians(30));
 		XMStoreFloat4x4(&objectMatrix, tempMatrix);
 		shape.SetObjectsMatrix(objectMatrix);
 		shape.numIndices = meshes[i].GetIndices().size();
-
 		temp.AddShape(shape);
+
+		RenderTexture *texterR = new RenderTexture;
+		texterR->func = RenderTextures;
+		DirectX::CreateDDSTextureFromFile(Renderer::device, L"TestCube.dds", NULL, &texterR->texture);
+
+		DirectX::CreateDDSTextureFromFile(Renderer::device, L"TestCube.dds", NULL, &temp.texture);
 		renderSet.AddMaterial(temp);
 		Renderer::meshes.push_back(renderSet);
+
+
+
+		RenderObject *objectR = new RenderObject;
+		objectR->func = RenderStuff;
+		objectR->numIndices = meshes[i].GetIndices().size();
+		objectMatrix._41 = 3;
+		objectR->objectsWorld = objectMatrix;
+
+		Renderer::head = meshR;
+		meshR->child = texterR;
+		texterR->child = objectR;
 	}
 
 }

@@ -3,8 +3,8 @@ class RenderShape;
 class RenderMaterial
 {
 	std::vector<RenderShape> objects;
-	ID3D11ShaderResourceView *texture;
 public:
+	ID3D11ShaderResourceView *texture;
 	RenderMaterial();
 	~RenderMaterial();
 	void Process();
