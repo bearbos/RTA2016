@@ -46,3 +46,7 @@ using namespace DirectX;
 #include "FBXLoader.h"
 #include "..\DirectXTK-feb2016\Inc\DDSTextureLoader.h"
 #include "RenderNode.h"
+#include "XTime.h"
+#include "Timer.h"
+
+#define MOVEMENTSPEED 5

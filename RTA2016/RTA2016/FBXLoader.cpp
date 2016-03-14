@@ -34,7 +34,9 @@ void FBXLoader::ReadIn(const char * _fileName)
 
 	//}
 
+	//m_filePaths.push_back("Teddy_Idle");
 	m_filePaths.push_back("Box_BindPose");
+	//m_filePaths.push_back("Box_BindPose");
 
 }
 
@@ -178,7 +180,6 @@ void FBXLoader::FBXBinaryConvert(const char * _fileName, const char * _binName)
 			{
 				bout.write((char*)&tempInd[j], sizeof(unsigned int));
 			}
-
 		}
 
 		bout.close();
@@ -418,6 +419,7 @@ void FBXLoader::LoadBinary(const char * _binName)
 		XMMATRIX tempMatrix = XMMatrixIdentity();
 		//XMMATRIX tempMatrix = XMMatrixRotationY(XMConvertToRadians(30));
 		XMStoreFloat4x4(&objectMatrix, tempMatrix);
+		objectMatrix._41 = -3;
 		shape.SetObjectsMatrix(objectMatrix);
 		shape.numIndices = meshes[i].GetIndices().size();
 		temp.AddShape(shape);
@@ -433,7 +435,7 @@ void FBXLoader::LoadBinary(const char * _binName)
 
 
 		RenderObject *objectR = new RenderObject;
-		objectR->func = RenderStuff;
+		objectR->func = RenderAndMovement;
 		objectR->numIndices = meshes[i].GetIndices().size();
 		objectMatrix._41 = 3;
 		objectR->objectsWorld = objectMatrix;

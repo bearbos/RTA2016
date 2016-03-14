@@ -43,13 +43,16 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	FBXLoader FBX_Loader;
 	FBX_Loader.ReadIn("FBXtoLoad.txt");
 	FBX_Loader.FBXBinaryCheck();
-
+	ZeroMemory(&msg, sizeof(msg));
 	// Main message loop:
-	while (GetMessage(&msg, NULL, 0, 0))
+	while (msg.message != WM_QUIT)
 	{
+		Renderer::delta = (float)Renderer::clock.GetDeltaTime();
+		Renderer::clock.GetDeltaTime();
 		Renderer::ClearScreenToColor(clear);
+		Renderer::Update();
 		Renderer::Render();
-		if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
+		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);

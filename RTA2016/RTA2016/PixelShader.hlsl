@@ -5,6 +5,7 @@ struct V_IN
 {
 	float4 posH : SV_POSITION;
 	float4 normals : NORMAL;
+	float4 worldPos : POS;
 	float2 uv : UV;
 };
 
