@@ -39,7 +39,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	}
 
 	hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_RTA2016));
-
+	float clear[4] = { 0.25f, 0.25f, 0.25, 1 };
 	FBXLoader FBX_Loader;
 	FBX_Loader.ReadIn("FBXtoLoad.txt");
 	FBX_Loader.FBXBinaryCheck();
@@ -47,7 +47,6 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	// Main message loop:
 	while (GetMessage(&msg, NULL, 0, 0))
 	{
-		float clear[4] = {0,0,0,1};
 		Renderer::ClearScreenToColor(clear);
 		Renderer::Render();
 		if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
@@ -56,7 +55,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 			DispatchMessage(&msg);
 		}
 	}
-
+	Renderer::ShutDown();
 	return (int) msg.wParam;
 }
 

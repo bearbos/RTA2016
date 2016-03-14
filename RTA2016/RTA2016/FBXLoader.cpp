@@ -1,5 +1,5 @@
 #include "FBXLoader.h"
-
+#include "RenderFunctions.h"
 FBXLoader::FBXLoader()
 {
 
@@ -11,28 +11,30 @@ FBXLoader::~FBXLoader()
 
 void FBXLoader::ReadIn(const char * _fileName)
 {
-	FILE * file;
-	fopen_s(&file, _fileName, "r");
+	//FILE * file;
+	//fopen_s(&file, _fileName, "r");
 
 
 
-	if (file == NULL)
-	{
-		return;
-	}
+	//if (file == NULL)
+	//{
+	//	return;
+	//}
 
-	while (true)
-	{
-		char lineHeader[128];
-		int res = fscanf_s(file, "%s", lineHeader);
-		if (res == EOF)
-		{
-			break;
-		}
+	//while (true)
+	//{
+	//	char lineHeader[128];
+	//	int res = fscanf_s(file, "%s", lineHeader);
+	//	if (res == EOF)
+	//	{
+	//		break;
+	//	}
 
-		m_filePaths.push_back((string)lineHeader);
+	//m_filePaths.push_back((string)lineHeader);
 
-	}
+	//}
+
+	m_filePaths.push_back("Box_BindPose");
 
 }
 
@@ -82,11 +84,8 @@ void FBXLoader::FBXBinaryCheck()
 				FBXBinaryConvert(tempF, tempB);
 			}
 		}
-
-
+		LoadBinary(tempB);
 	}
-
-
 }
 
 void FBXLoader::FBXBinaryConvert(const char * _fileName, const char * _binName)
@@ -182,7 +181,7 @@ void FBXLoader::FBXBinaryConvert(const char * _fileName, const char * _binName)
 
 		}
 
-			bout.close();
+		bout.close();
 	}
 
 }
@@ -345,7 +344,6 @@ void FBXLoader::LoadBinary(const char * _binName)
 		unsigned int numMeshes;
 		bin.read((char*)&numMeshes, sizeof(unsigned int));
 
-
 		for (unsigned int i = 0; i < numMeshes; i++)
 		{
 
@@ -367,7 +365,7 @@ void FBXLoader::LoadBinary(const char * _binName)
 
 			for (unsigned int j = 0; j < uniqueSize; j++)
 			{
-				bin.read((char*)&tempVerts[i], sizeof(Mesh::UniqueMeshVertex));
+				bin.read((char*)&tempVerts[j], sizeof(Mesh::UniqueMeshVertex));
 			}
 
 			vector<unsigned int> tempInd;
@@ -375,7 +373,7 @@ void FBXLoader::LoadBinary(const char * _binName)
 
 			for (unsigned int j = 0; j < indiciesSize; j++)
 			{
-				bin.read((char*)&tempInd[i], sizeof(unsigned int));
+				bin.read((char*)&tempInd[j], sizeof(unsigned int));
 			}
 
 			tempMesh.GetVertices() = tempVerts;
@@ -383,9 +381,68 @@ void FBXLoader::LoadBinary(const char * _binName)
 
 			meshes.push_back(tempMesh);
 		}
-
 		bin.close();
 	}
+	for (size_t i = 0; i < meshes.size(); i++)
+	{
+		RenderSet renderSet;
+		renderSet.SetIndexBuffer(meshes[i].GetIndices());
+		vector<uniqueVertex> vertexes;
+		for (size_t j = 0; j < meshes[i].GetVertices().size(); j++)
+		{
+			uniqueVertex tempVertex;
+			tempVertex.position.x = meshes[i].GetVertices()[j].uVPos.x;
+			tempVertex.position.y = meshes[i].GetVertices()[j].uVPos.y;
+			tempVertex.position.z = meshes[i].GetVertices()[j].uVPos.z;
+			tempVertex.position.w = 1.0f;
+			tempVertex.normal.x = meshes[i].GetVertices()[j].uVNorm.x;
+			tempVertex.normal.y = meshes[i].GetVertices()[j].uVNorm.y;
+			tempVertex.normal.z = meshes[i].GetVertices()[j].uVNorm.z;
+			tempVertex.normal.w = 1;
+			tempVertex.texture.x = meshes[i].GetVertices()[j].textCoord.u;
+			tempVertex.texture.y = meshes[i].GetVertices()[j].textCoord.v;
+			vertexes.push_back(tempVertex);
+		}
+		renderSet.SetVertexBuffer(vertexes);
+		RenderMesh *meshR = new RenderMesh;
+		//meshR->meshIndexBuffer = renderSet.meshIndexBuffer;
+		//meshR->meshVertexBuffer = renderSet.meshVertexBuffer;
+		meshR->stride = sizeof(uniqueVertex);
+		meshR->SetVertexBuffer(vertexes);
+		meshR->SetIndexBuffer(meshes[i].GetIndices());
+		meshR->func = RenderMeshes;
 
+		RenderMaterial temp;
+		RenderShape shape;
+		XMFLOAT4X4 objectMatrix;
+		XMMATRIX tempMatrix = XMMatrixIdentity();
+		//XMMATRIX tempMatrix = XMMatrixRotationY(XMConvertToRadians(30));
+		XMStoreFloat4x4(&objectMatrix, tempMatrix);
+		shape.SetObjectsMatrix(objectMatrix);
+		shape.numIndices = meshes[i].GetIndices().size();
+		temp.AddShape(shape);
+
+		RenderTexture *texterR = new RenderTexture;
+		texterR->func = RenderTextures;
+		DirectX::CreateDDSTextureFromFile(Renderer::device, L"TestCube.dds", NULL, &texterR->texture);
+
+		DirectX::CreateDDSTextureFromFile(Renderer::device, L"TestCube.dds", NULL, &temp.texture);
+		renderSet.AddMaterial(temp);
+		Renderer::meshes.push_back(renderSet);
+
+
+
+		RenderObject *objectR = new RenderObject;
+		objectR->func = RenderStuff;
+		objectR->numIndices = meshes[i].GetIndices().size();
+		objectMatrix._41 = 3;
+		objectR->objectsWorld = objectMatrix;
+		if (Renderer::head == nullptr)
+			Renderer::head = meshR;
+		else
+			Renderer::head->next = meshR;
+		meshR->child = texterR;
+		texterR->child = objectR;
+	}
 
 }
