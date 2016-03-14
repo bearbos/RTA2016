@@ -149,6 +149,11 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
     </FxCompile>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DirectXTK-feb2016\DirectXTK_Desktop_2013.vcxproj">
+      <Project>{e0b52ae7-e160-4d32-bf3f-910b785e5a8e}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 12.0.40629.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RTA2016", "RTA2016\RTA2016.vcxproj", "{21BCA49B-25CC-4DAF-8B7C-CAC02BFDD0D5}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E0B52AE7-E160-4D32-BF3F-910B785E5A8E} = {E0B52AE7-E160-4D32-BF3F-910B785E5A8E}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DirectXTK_Desktop_2013", "DirectXTK-feb2016\DirectXTK_Desktop_2013.vcxproj", "{E0B52AE7-E160-4D32-BF3F-910B785E5A8E}"
 EndProject

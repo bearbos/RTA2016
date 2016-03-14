@@ -30,7 +30,7 @@ void FBXLoader::ReadIn(const char * _fileName)
 	//		break;
 	//	}
 
-		//m_filePaths.push_back((string)lineHeader);
+	//m_filePaths.push_back((string)lineHeader);
 
 	//}
 
@@ -181,7 +181,7 @@ void FBXLoader::FBXBinaryConvert(const char * _fileName, const char * _binName)
 
 		}
 
-			bout.close();
+		bout.close();
 	}
 
 }
@@ -437,8 +437,10 @@ void FBXLoader::LoadBinary(const char * _binName)
 		objectR->numIndices = meshes[i].GetIndices().size();
 		objectMatrix._41 = 3;
 		objectR->objectsWorld = objectMatrix;
-
-		Renderer::head = meshR;
+		if (Renderer::head == nullptr)
+			Renderer::head = meshR;
+		else
+			Renderer::head->next = meshR;
 		meshR->child = texterR;
 		texterR->child = objectR;
 	}

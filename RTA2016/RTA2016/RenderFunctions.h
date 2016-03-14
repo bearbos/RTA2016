@@ -17,7 +17,7 @@ void RenderStuff(RenderNode &_node)
 void RenderTextures(RenderNode &_node)
 {
 	RenderTexture &textureNode = (RenderTexture&)_node;
-	Renderer::deviceContext->PSSetShaderResources(0, 1, &textureNode.texture);
+	Renderer::deviceContext->PSSetShaderResources(0, 1, &textureNode.texture.p);
 	RenderNode *itr = textureNode.child;
 	while (itr != nullptr)
 	{
@@ -29,8 +29,8 @@ void RenderTextures(RenderNode &_node)
 void RenderMeshes(RenderNode &_node)
 {
 	RenderMesh &meshNode = (RenderMesh&)_node;
-	Renderer::deviceContext->IASetVertexBuffers(0, 1, &meshNode.meshVertexBuffer, &meshNode.stride, &meshNode.offset);
-	Renderer::deviceContext->IASetIndexBuffer(meshNode.meshIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+	Renderer::deviceContext->IASetVertexBuffers(0, 1, &meshNode.meshVertexBuffer.p, &meshNode.stride, &meshNode.offset);
+	Renderer::deviceContext->IASetIndexBuffer(meshNode.meshIndexBuffer.p, DXGI_FORMAT_R32_UINT, 0);
 	RenderNode *itr = meshNode.child;
 	while (itr != nullptr)
 	{

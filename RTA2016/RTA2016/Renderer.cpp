@@ -220,12 +220,10 @@ void Renderer::ShutDown()
 			}
 			RenderTexture *tempText = (RenderTexture*)textures;
 			textures = textures->next;
-			tempText->Shutdown();
 			delete tempText;
 		}
 		RenderMesh *tempMesh = (RenderMesh*)itr;
 		itr = itr->next;
-		tempMesh->Shutdoqwn();
 		delete tempMesh;
 	}
 	Release(device);

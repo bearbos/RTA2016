@@ -21,27 +21,16 @@ public:
 class RenderTexture : public RenderNode
 {
 public:
-	ID3D11ShaderResourceView *texture;
-	void Shutdown()
-	{
-		if (texture)
-			texture->Release();
-	}
+	CComPtr<ID3D11ShaderResourceView> texture;
 };
 
 class RenderMesh : public RenderNode
 {
 public:
 	CComPtr<ID3D11Buffer> meshVertexBuffer;
-	ID3D11Buffer *meshIndexBuffer;
+	CComPtr<ID3D11Buffer> meshIndexBuffer;
 	unsigned int stride = 0, offset = 0;
-	void Shutdoqwn()
-	{
-		//if (meshVertexBuffer.p)
-		//	meshVertexBuffer.p->Release();
-		if (meshIndexBuffer)
-			meshIndexBuffer->Release();
-	}
+
 	void SetVertexBuffer(std::vector<uniqueVertex> _vertexes)
 	{
 		D3D11_BUFFER_DESC buffDesc;
