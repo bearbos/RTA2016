@@ -102,7 +102,7 @@ void FBXLoader::FBXBinaryConvert(const char * _fileName, const char * _binName)
 	bool importerStatus = importer->Initialize(_fileName, -1, sdkManager->GetIOSettings());
 	if (!importerStatus)
 	{
-		printf("Call to FbxImporter::Initialize() FAILED.\n");
+		printf("The call to the FbxImporter::Initialize() FAILED.\n");
 		printf("Error returned: %s\n\n", importer->GetStatus().GetErrorString());
 		exit(-1);
 	}
@@ -125,6 +125,8 @@ void FBXLoader::FBXBinaryConvert(const char * _fileName, const char * _binName)
 
 	vector<FbxNode*> fbxJoints;
 
+	FbxNode* rootNode = scene->GetRootNode();
+
 	vector<Mesh> meshes;
 
 	for (int i = 0; i < scene->GetSrcObjectCount<FbxMesh>(); ++i)
@@ -138,11 +140,32 @@ void FBXLoader::FBXBinaryConvert(const char * _fileName, const char * _binName)
 		{
 			return;
 		}
+		skeletonPTR = &mesh.GetSkeleton();
+		skeletonNodes.clear();
+		ProcessSkeletonHierarchy(rootNode);
+		ProcessJointsAndAnimations(meshAttribute);
+		/*for (unsigned int i = 0; i < skeletonPTR->size(); i++)
+		{
+			if (!skeletonNodes[i]->GetMesh())
+			{
+				continue;
+			}
+			ProcessJointsAndAnimations(skeletonNodes[i]);
+		}*/
+
+		//for (unsigned int i = 0; i < rootNode->GetChildCount(); i++)
+		//{
+		//	if (!rootNode->GetChild(i)->GetMesh())
+		//	{
+		//		continue;
+		//	}
+		//	ProcessJointsAndAnimations(skeletonNodes[i]);
+		//}
 		/*if (LoadTexture(meshAttribute, mesh) == false)
 		{
 		return;
 		}*/
-
+		mesh.GetSkeleton() = *skeletonPTR;
 		meshes.push_back(mesh);
 	}
 
@@ -155,10 +178,10 @@ void FBXLoader::FBXBinaryConvert(const char * _fileName, const char * _binName)
 		bout.write((char*)&numMeshes, sizeof(unsigned int));
 		for (unsigned int i = 0; i < numMeshes; i++)
 		{
-
 			unsigned int uniqueSize = meshes[i].GetVertices().size();
 			unsigned int indiciesSize = meshes[i].GetIndices().size();
 			unsigned int textNamesSize = meshes[i].GetTextureNames().size();
+			unsigned int jointsSize = meshes[i].GetSkeleton().size();
 			//unsigned int textsSize = meshes[i].GetTextures().size();
 			string name = meshes[i].GetName();
 
@@ -166,9 +189,10 @@ void FBXLoader::FBXBinaryConvert(const char * _fileName, const char * _binName)
 			bout.write((char*)&uniqueSize, sizeof(unsigned int));
 			bout.write((char*)&indiciesSize, sizeof(unsigned int));
 			bout.write((char*)&textNamesSize, sizeof(unsigned int));
+			bout.write((char*)&jointsSize, sizeof(unsigned int));
 
 			vector<Mesh::UniqueMeshVertex> tempVerts = meshes[i].GetVertices();
-
+			vector<Joint> tempJoints = meshes[i].GetSkeleton();
 			for (unsigned int j = 0; j < uniqueSize; ++j)
 			{
 				bout.write((char*)&tempVerts[j], sizeof(Mesh::UniqueMeshVertex));
@@ -180,6 +204,11 @@ void FBXLoader::FBXBinaryConvert(const char * _fileName, const char * _binName)
 			{
 				bout.write((char*)&tempInd[j], sizeof(unsigned int));
 			}
+			for (unsigned int j = 0; j < jointsSize; j++)
+			{
+				bout.write((char*)&tempJoints[j], sizeof(Joint));
+			}
+
 		}
 
 		bout.close();
@@ -219,19 +248,19 @@ bool FBXLoader::LoadMesh(FbxMesh* meshAttribute, Mesh& mesh, vector<unsigned int
 			uniqueVert.uVPos.y = (float)position.mData[1];
 			uniqueVert.uVPos.z = (float)position.mData[2];
 
-			// Get them texture coords
+			// Get them texture coordinates
 			unsigned int uvElementCount = meshAttribute->GetElementUVCount();
 			for (unsigned int uvElevement = 0; uvElevement < uvElementCount; ++uvElevement)
 			{
 				FbxGeometryElementUV* geometryElementUV = meshAttribute->GetElementUV(uvElevement);
-
 				FbxLayerElement::EMappingMode mappingMode = geometryElementUV->GetMappingMode();
 				FbxLayerElement::EReferenceMode referenceMode = geometryElementUV->GetReferenceMode();
 
 				int directIndex = -1;
 
-				// eByControlPoint:  One control point has one uv
-				// eByPolygonVertex:  One control point can have multiple uv's
+				// eByControlPoint:  A single control point has a single uv
+				// eByPolygonVertex:  A single control point can have multiple uv's
+
 				if (mappingMode == FbxGeometryElement::eByControlPoint)
 				{
 					if (referenceMode == FbxGeometryElement::eDirect)
@@ -251,7 +280,6 @@ bool FBXLoader::LoadMesh(FbxMesh* meshAttribute, Mesh& mesh, vector<unsigned int
 						directIndex = meshAttribute->GetTextureUVIndex(polygon, polygonVertex);
 					}
 				}
-
 				if (directIndex != -1)
 				{
 					FbxVector2 uv = geometryElementUV->GetDirectArray().GetAt(directIndex);
@@ -259,7 +287,6 @@ bool FBXLoader::LoadMesh(FbxMesh* meshAttribute, Mesh& mesh, vector<unsigned int
 					uniqueVert.textCoord.u = (float)uv.mData[0];
 					uniqueVert.textCoord.v = (float)uv.mData[1];
 				}
-
 			}
 
 			// Get those Normals in here
@@ -267,7 +294,6 @@ bool FBXLoader::LoadMesh(FbxMesh* meshAttribute, Mesh& mesh, vector<unsigned int
 			for (unsigned int normalElement = 0; normalElement < normalElementCount; ++normalElement)
 			{
 				FbxGeometryElementNormal* geometryElementNormal = meshAttribute->GetElementNormal(normalElement);
-
 				FbxLayerElement::EMappingMode mappingMode = geometryElementNormal->GetMappingMode();
 				FbxLayerElement::EReferenceMode referenceMode = geometryElementNormal->GetReferenceMode();
 
@@ -316,8 +342,9 @@ bool FBXLoader::LoadMesh(FbxMesh* meshAttribute, Mesh& mesh, vector<unsigned int
 			mesh.GetIndices().push_back(i);
 			++vertexID;
 		}
-
 	}
+
+
 
 	return true;
 
@@ -352,11 +379,13 @@ void FBXLoader::LoadBinary(const char * _binName)
 			unsigned int uniqueSize;
 			unsigned int indiciesSize;
 			unsigned int textNamesSize;
+			unsigned int jointsSize;
 
 			bin.read((char*)&name, 128);
 			bin.read((char*)&uniqueSize, sizeof(unsigned int));
 			bin.read((char*)&indiciesSize, sizeof(unsigned int));
 			bin.read((char*)&textNamesSize, sizeof(unsigned int));
+			bin.read((char*)&jointsSize, sizeof(unsigned int));
 
 			Mesh tempMesh;
 			tempMesh.GetName() = name;
@@ -377,8 +406,18 @@ void FBXLoader::LoadBinary(const char * _binName)
 				bin.read((char*)&tempInd[j], sizeof(unsigned int));
 			}
 
+			vector<Joint> tempSkele;
+			tempSkele.resize(jointsSize);
+
+			//for (unsigned int j = 0; j < 1; j++)
+			//{
+			//	bin.read((char*)&tempSkele[j], sizeof(Joint));
+			//}
+			Joint tempJoint;
+			bin.read((char*)&tempJoint, sizeof(Joint));
 			tempMesh.GetVertices() = tempVerts;
 			tempMesh.GetIndices() = tempInd;
+			//tempMesh.GetSkeleton() = tempSkele;
 
 			meshes.push_back(tempMesh);
 		}
@@ -449,4 +488,120 @@ void FBXLoader::LoadBinary(const char * _binName)
 		texterR->child = objectR;
 	}
 
+}
+
+void FBXLoader::ProcessSkeletonHierarchy(FbxNode* _rootNodeIn)
+{
+	int temp = _rootNodeIn->GetChildCount();
+	for (int indexOfChild = 0; indexOfChild < _rootNodeIn->GetChildCount(); ++indexOfChild)
+	{
+		FbxNode* currentNode = _rootNodeIn->GetChild(indexOfChild);
+		ProcessSkeletonHierarchyRecursively(currentNode, 0, -1);
+	}
+}
+
+void FBXLoader::ProcessSkeletonHierarchyRecursively(FbxNode* _nodeIn, unsigned int _myIndex, int _parentIndexIn)
+{
+	if (_nodeIn->GetNodeAttribute() && _nodeIn->GetNodeAttribute()->GetAttributeType() && _nodeIn->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eSkeleton)
+	{
+		string temp;
+		Joint currJoint;
+		currJoint.parentIndex = _parentIndexIn;
+		temp = _nodeIn->GetName();
+		strcpy_s(currJoint.name, temp.c_str());
+		skeletonPTR->push_back(currJoint);
+		skeletonNodes.push_back(_nodeIn);
+	}
+	for (int i = 0; i < _nodeIn->GetChildCount(); ++i)
+	{
+		ProcessSkeletonHierarchyRecursively(_nodeIn->GetChild(i), skeletonPTR->size(), _myIndex);
+	}
+}
+
+void FBXLoader::ProcessJointsAndAnimations(FbxMesh* _nodeIn)
+{	
+	FbxMesh* currentMesh = _nodeIn;
+	unsigned int numDeformers = currentMesh->GetDeformerCount();
+	//FbxAMatrix geoTransform = GetGeometryTransformation(currentMesh); // Something the forums said to do for those random 1%
+
+	for (unsigned int deformerIndex = 0; deformerIndex < numDeformers; ++deformerIndex)
+	{
+		FbxSkin* currentSkin = reinterpret_cast<FbxSkin*>(currentMesh->GetDeformer(deformerIndex, FbxDeformer::eSkin));
+		if (!currentSkin)
+		{
+			continue;
+		}
+
+		unsigned int numClusters = currentSkin->GetClusterCount();
+		for (unsigned int clusterIndex = 0; clusterIndex < numClusters; ++clusterIndex)
+		{
+			FbxCluster* currentCluster = currentSkin->GetCluster(clusterIndex);
+			string currentJoinName = currentCluster->GetLink()->GetName();
+			unsigned int currentJointIndex = FindJointIndexUsingName(currentJoinName);
+			FbxAMatrix local;
+			FbxAMatrix world;
+			FbxAMatrix globalBindposeInverseMatrix;
+
+			currentCluster->GetTransformMatrix(local);
+			currentCluster->GetTransformLinkMatrix(world);
+			globalBindposeInverseMatrix = world.Inverse() * local;// *geoTransform;
+			skeletonPTR->operator[](currentJointIndex).Local = fbxToFloatMatrix(local);
+			skeletonPTR->operator[](currentJointIndex).World = fbxToFloatMatrix(world);
+			skeletonPTR->operator[](currentJointIndex).GlobalBind = fbxToFloatMatrix(globalBindposeInverseMatrix);
+			//skeletonPTR->operator[](currentJointIndex).Node = currentCluster->GetLink();
+
+			unsigned int numIndecies = currentCluster->GetControlPointIndicesCount();
+			for (unsigned int indeciesIndex = 0; indeciesIndex < numIndecies; ++indeciesIndex)
+			{
+				BlendingIndexWeightPair currentBlendingPair;
+				currentBlendingPair.BlendingIndex = (float)currentJointIndex;
+				currentBlendingPair.BlendingWeight = (float)currentCluster->GetControlPointWeights()[indeciesIndex];
+				// Stopped Here for now
+			}
+		}
+	}
+
+}
+
+FbxAMatrix FBXLoader::GetGeometryTransformation(FbxNode* _nodeIn)
+{
+	if (!_nodeIn)
+	{
+		throw std::exception("Null for mesh geometry");
+	}
+
+	const FbxVector4 lTranslation = _nodeIn->GetGeometricTranslation(FbxNode::eSourcePivot);
+	const FbxVector4 lRotation = _nodeIn->GetGeometricRotation(FbxNode::eSourcePivot);
+	const FbxVector4 lScale = _nodeIn->GetGeometricScaling(FbxNode::eSourcePivot);
+
+	return FbxAMatrix(lTranslation, lRotation, lScale);
+}
+
+unsigned int FBXLoader::FindJointIndexUsingName(const string& _JointNameIn)
+{
+	for (unsigned int i = 0; i < skeletonPTR->size(); ++i)
+	{
+		Joint temp = skeletonPTR->operator[](i);
+		if (temp.name == _JointNameIn)
+		{
+			return i;
+		}
+	}
+	return 1;
+}
+
+XMFLOAT4X4 FBXLoader::fbxToFloatMatrix(FbxAMatrix& _matrixIn)
+{
+	XMFLOAT4X4 temp;
+	_matrixIn = _matrixIn.Transpose();
+
+	for (unsigned int i = 0; i < 4; i++)
+	{
+		for (unsigned int j = 0; j < 4; j++)
+		{
+			temp.m[i][j] = (float)_matrixIn.Get(i, j);
+		}
+	}
+
+	return temp;
 }

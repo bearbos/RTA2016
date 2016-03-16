@@ -1,5 +1,7 @@
 #pragma once
 
+#include "stdafx.h"
+
 using std::fstream;
 using std::vector;
 using std::string;
@@ -12,7 +14,8 @@ public:
 	~FBXLoader();
 	void ReadIn(const char * _fileName);
 	void FBXBinaryCheck();
-
+	vector<Joint>* skeletonPTR;
+	vector<FbxNode *> skeletonNodes;
 	
 
 private:
@@ -21,5 +24,11 @@ private:
 	bool LoadMesh(FbxMesh* meshAttribute, Mesh& mesh, vector<unsigned int>& controlPointIndices);
 	bool LoadTexture(FbxMesh* meshAttribute, Mesh& mesh);
 	void LoadBinary(const char * _binName);
+	void ProcessSkeletonHierarchy(FbxNode* _rootNodeIn);
+	void ProcessSkeletonHierarchyRecursively(FbxNode* _nodeIn, unsigned int _myIndex, int _parentIndexIn);
+	void ProcessJointsAndAnimations(FbxMesh* _nodeIn);
+	FbxAMatrix GetGeometryTransformation(FbxNode* inNode);
+	unsigned int FindJointIndexUsingName(const string& _JointNameIn);
+	XMFLOAT4X4 fbxToFloatMatrix(FbxAMatrix& _matrixIn);
 };
 

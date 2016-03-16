@@ -2,6 +2,7 @@
 
 // taken from RTABase
 
+//struct Joint;
 
 class Mesh
 {
@@ -61,9 +62,14 @@ public:
 	unsigned int& GetJointIndex();
 	const unsigned int& GetJointIndex() const;
 
+	std::vector<Joint>& GetSkeleton();
+	const std::vector<Joint>& GetSkeleton() const;
+
 
 private:
 	std::string name;
+
+	std::vector<Joint> skeleton;
 
 	std::vector< UniqueMeshVertex > vertices;
 

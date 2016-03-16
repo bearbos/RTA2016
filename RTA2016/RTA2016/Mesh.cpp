@@ -86,3 +86,13 @@ const unsigned int& Mesh::GetJointIndex() const
 {
 	return jointIndex;
 }
+
+std::vector<Joint>& Mesh::GetSkeleton()
+{
+	return skeleton;
+}
+
+const std::vector<Joint>& Mesh::GetSkeleton() const
+{
+	return skeleton;
+}
