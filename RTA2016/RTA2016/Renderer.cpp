@@ -4,6 +4,7 @@
 #include "PixelShader.csh"
 #include "SpotLight.csh"
 #include "PointLight.csh"
+#include "DirLight.csh"
 
 #define Release(x) { if(x) {x->Release(); x =0;} }
 ID3D11Device *Renderer::device = 0; //Released
@@ -34,6 +35,10 @@ int Renderer::whichLight = 0;//Doesn't need to be Released
 float Renderer::delta = 0; //Doesn't need to be Released
 ID3D11Buffer *Renderer::pointLightBuffer = 0; //Released
 ID3D11PixelShader *Renderer::pointLightShader = 0; //Released
+ID3D11PixelShader *Renderer::directionLightShader = 0;
+ID3D11Buffer *Renderer::directionLightBuffer = 0;
+XMFLOAT4 Renderer::lightDirection;
+bool Renderer::pressed = false;
 void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int windWidth)
 {
 	DXGI_SWAP_CHAIN_DESC chainDesc;
@@ -101,6 +106,7 @@ void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int win
 
 	worldConBuffDesc.ByteWidth = sizeof(XMFLOAT4);
 	device->CreateBuffer(&worldConBuffDesc, NULL, &pointLightBuffer);
+	device->CreateBuffer(&worldConBuffDesc, NULL, &directionLightBuffer);
 	D3D11_INPUT_ELEMENT_DESC layoutDesc[] =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -113,6 +119,7 @@ void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int win
 	hResult = device->CreatePixelShader(SpotLight, sizeof(SpotLight), NULL, &spotLightShader);
 	hResult = device->CreatePixelShader(PointLight, sizeof(PointLight), NULL, &pointLightShader);
 	hResult = device->CreateVertexShader(VertexShader, sizeof(VertexShader), NULL, &vertexShader);
+	hResult = device->CreatePixelShader(DirLight, sizeof(DirLight), NULL, &directionLightShader);
 
 	D3D11_SAMPLER_DESC sampleDesc;
 	SecureZeroMemory(&sampleDesc, sizeof(sampleDesc));
@@ -168,6 +175,11 @@ void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int win
 	hResult = device->CreateDepthStencilView(depthStencilPointer, NULL, &depthStencilViewport);
 
 	GetCursorPos(&prevMouseLoc);
+	lightDirection.x = 3.0f;
+	lightDirection.y = -2.0f;
+	lightDirection.z = 3.0f;
+	lightDirection.w = 0.0f;
+	XMStoreFloat4(&lightDirection, XMVector4Normalize(XMLoadFloat4(&lightDirection)));
 }
 
 
@@ -208,6 +220,16 @@ void Renderer::Render()
 	case 2:
 		deviceContext->PSSetShader(pointLightShader, NULL, 0);
 		deviceContext->PSSetConstantBuffers(0, 1, &pointLightBuffer);
+		break;
+	case 3:
+		D3D11_MAPPED_SUBRESOURCE dirLightResource;
+		Renderer::deviceContext->Map(directionLightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dirLightResource);
+		XMFLOAT4 *dirLightVram;
+		dirLightVram = (XMFLOAT4*)dirLightResource.pData;
+		*dirLightVram = lightDirection;
+		Renderer::deviceContext->Unmap(directionLightBuffer, NULL);
+		deviceContext->PSSetShader(directionLightShader, NULL, 0);
+		deviceContext->PSSetConstantBuffers(0, 1, &directionLightBuffer);
 		break;
 	default:
 		break;
@@ -283,6 +305,8 @@ void Renderer::ShutDown()
 	Release(spotLightShader);
 	Release(pointLightBuffer);
 	Release(pointLightShader);
+	Release(directionLightBuffer);
+	Release(directionLightShader);
 }
 
 void Renderer::Update()
@@ -358,5 +382,19 @@ void Renderer::Update()
 	if (GetAsyncKeyState('3')) //Switches to pointLight
 	{
 		whichLight = 2;
+	}
+	if (GetAsyncKeyState('4')) //Switches to direction Light
+	{
+		whichLight = 3;
+	}
+	if (GetAsyncKeyState(VK_TAB) && !pressed)
+	{
+		whichLight++;
+		whichLight %= 4;
+		pressed = true;
+	}
+	else if (!GetAsyncKeyState(VK_TAB) && pressed)
+	{
+		pressed = false;
 	}
 }

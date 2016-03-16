@@ -111,5 +111,6 @@
     <FxCompile Include="PixelShader.hlsl" />
     <FxCompile Include="SpotLight.hlsl" />
     <FxCompile Include="PointLight.hlsl" />
+    <FxCompile Include="DirLight.hlsl" />
   </ItemGroup>
 </Project>

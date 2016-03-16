@@ -425,10 +425,12 @@ void FBXLoader::LoadBinary(const char * _binName)
 		temp.AddShape(shape);
 
 		RenderTexture *texterR = new RenderTexture;
-		texterR->func = RenderTextures;
+		texterR->func = RenderTextures;//
 		DirectX::CreateDDSTextureFromFile(Renderer::device, L"TestCube.dds", NULL, &texterR->texture);
+		//DirectX::CreateDDSTextureFromFile(Renderer::device, L"Teddy_D.dds", NULL, &texterR->texture);
 
 		DirectX::CreateDDSTextureFromFile(Renderer::device, L"TestCube.dds", NULL, &temp.texture);
+		//DirectX::CreateDDSTextureFromFile(Renderer::device, L"Teddy_D.dds", NULL, &temp.texture);
 		renderSet.AddMaterial(temp);
 		Renderer::meshes.push_back(renderSet);
 
