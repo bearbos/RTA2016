@@ -20,6 +20,7 @@ public:
 
 private:
 	vector<string> m_filePaths;
+	vector<XMFLOAT4X4> m_worldMatrices;
 	void FBXBinaryConvert(const char * _fileName, const char * _binName);
 	bool LoadMesh(FbxMesh* meshAttribute, Mesh& mesh, vector<unsigned int>& controlPointIndices);
 	bool LoadTexture(FbxMesh* meshAttribute, Mesh& mesh);
