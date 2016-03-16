@@ -18,3 +18,23 @@ struct Vertex
 	XMFLOAT4 norm;
 	XMFLOAT2 uv;
 };
+struct Joint
+{
+	XMFLOAT4X4 World;
+	XMFLOAT4X4 Local;
+	XMFLOAT4X4 GlobalBind;
+	FbxNode * Node;
+	Joint * parentPtr;
+	unsigned int parentIndex;
+	string name;
+	bool bDirty;
+	vector<Joint *> children;
+	BlendingIndexWeightPair SkinWeight;
+
+};
+
+struct BlendingIndexWeightPair
+{
+	float BlendingIndex;
+	float BlendingWeight;
+};
