@@ -1,5 +1,8 @@
 #pragma once
-#include "stdafx.h"
+//#include "stdafx.h"
+#include <fbxsdk.h>
+
+
 struct ViewProjectionMatrixs
 {
 	XMFLOAT4X4 viewMatrix;
@@ -18,23 +21,22 @@ struct Vertex
 	XMFLOAT4 norm;
 	XMFLOAT2 uv;
 };
+struct BlendingIndexWeightPair
+{
+	float BlendingIndex;
+	float BlendingWeight;
+};
 struct Joint
 {
 	XMFLOAT4X4 World;
 	XMFLOAT4X4 Local;
 	XMFLOAT4X4 GlobalBind;
-	FbxNode * Node;
-	Joint * parentPtr;
+	//FbxNode* Node;
+	//Joint * parentPtr;
 	unsigned int parentIndex;
-	string name;
+	char name[128];
 	bool bDirty;
-	vector<Joint *> children;
+	//std::vector<Joint *> children;
 	BlendingIndexWeightPair SkinWeight;
 
-};
-
-struct BlendingIndexWeightPair
-{
-	float BlendingIndex;
-	float BlendingWeight;
 };

@@ -2,6 +2,7 @@
 
 // taken from RTABase
 
+//struct Joint;
 
 class Mesh
 {
@@ -68,7 +69,7 @@ public:
 private:
 	std::string name;
 
-	vector<Joint> skeleton;
+	std::vector<Joint> skeleton;
 
 	std::vector< UniqueMeshVertex > vertices;
 
