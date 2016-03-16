@@ -74,24 +74,22 @@ void FBXLoader::ReadIn(const char * _fileName)
 			char _44[5];
 
 			fin.getline(_11, 5);
-			fin.getline(_21, 5);
-			fin.getline(_31, 5);
-			fin.getline(_41, 5);
 			fin.getline(_12, 5);
-			fin.getline(_22, 5);
-			fin.getline(_32, 5);
-			fin.getline(_42, 5);
 			fin.getline(_13, 5);
-			fin.getline(_23, 5);
-			fin.getline(_33, 5);
-			fin.getline(_43, 5);
 			fin.getline(_14, 5);
+			fin.getline(_21, 5);
+			fin.getline(_22, 5);
+			fin.getline(_23, 5);
 			fin.getline(_24, 5);
+			fin.getline(_31, 5);
+			fin.getline(_32, 5);
+			fin.getline(_33, 5);
 			fin.getline(_34, 5);
+			fin.getline(_41, 5);
+			fin.getline(_42, 5);
+			fin.getline(_43, 5);
 			fin.getline(_44, 5);
 
-
-			
 
 			XMFLOAT4X4 tempMat;
 
@@ -113,9 +111,6 @@ void FBXLoader::ReadIn(const char * _fileName)
 			tempMat._44 = (float)atof(_44);
 				
 				
-				
-				
-
 			m_filePaths.push_back((string)lineHeader);
 			m_worldMatrices.push_back(tempMat);
 		}
