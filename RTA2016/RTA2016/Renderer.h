@@ -3,6 +3,7 @@ class RenderSet;
 class RenderNode;
 class XTime;
 class Timer;
+class Mesh;
 class Renderer
 {
 	static XMFLOAT4X4 camera;
@@ -38,6 +39,7 @@ public:
 	static XMFLOAT4X4 viewMatrix;
 	static XMFLOAT4X4 projMatrix;
 	static XMFLOAT4 lightDirection;
+	static std::vector<std::vector<Mesh>> Objects;
 	Renderer();
 	~Renderer();
 	static void Initialize(HWND window, unsigned int windHeight, unsigned int windWidth);

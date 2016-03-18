@@ -33,6 +33,9 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	MyRegisterClass(hInstance);
 
 	// Perform application initialization:
+	FBXLoader FBX_Loader;
+	FBX_Loader.ReadIn("FBXtoLoad.txt");
+	FBX_Loader.FBXBinaryCheck();
 	if (!InitInstance (hInstance, nCmdShow))
 	{
 		return FALSE;
@@ -40,9 +43,6 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 
 	hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_RTA2016));
 	float clear[4] = { 0.25f, 0.25f, 0.25, 1 };
-	FBXLoader FBX_Loader;
-	FBX_Loader.ReadIn("FBXtoLoad.txt");
-	FBX_Loader.FBXBinaryCheck();
 	ZeroMemory(&msg, sizeof(msg));
 	// Main message loop:
 	while (msg.message != WM_QUIT)

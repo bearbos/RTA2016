@@ -1,5 +1,4 @@
 #include "FBXLoader.h"
-#include "RenderFunctions.h"
 FBXLoader::FBXLoader()
 {
 
@@ -34,8 +33,9 @@ void FBXLoader::ReadIn(const char * _fileName)
 
 	//}
 
-	//m_filePaths.push_back("Teddy_Idle");
-	m_filePaths.push_back("Box_BindPose");
+	m_filePaths.push_back("Teddy_Idle");
+	//m_filePaths.push_back("Box_BindPose");
+	m_filePaths.push_back("sphere");
 	//m_filePaths.push_back("Box_BindPose");
 
 }
@@ -143,14 +143,20 @@ void FBXLoader::FBXBinaryConvert(const char * _fileName, const char * _binName)
 		skeletonPTR = &mesh.GetSkeleton();
 		skeletonNodes.clear();
 		ProcessSkeletonHierarchy(rootNode);
+		for (size_t j = 0; j < skeletonPTR->size(); j++)
+		{
+			XMStoreFloat4x4(&skeletonPTR->operator[](j).World, XMMatrixIdentity());
+			XMStoreFloat4x4(&skeletonPTR->operator[](j).Local, XMMatrixIdentity());
+			XMStoreFloat4x4(&skeletonPTR->operator[](j).GlobalBind, XMMatrixIdentity());
+		}
 		ProcessJointsAndAnimations(meshAttribute);
 		/*for (unsigned int i = 0; i < skeletonPTR->size(); i++)
 		{
-			if (!skeletonNodes[i]->GetMesh())
-			{
-				continue;
-			}
-			ProcessJointsAndAnimations(skeletonNodes[i]);
+		if (!skeletonNodes[i]->GetMesh())
+		{
+		continue;
+		}
+		ProcessJointsAndAnimations(skeletonNodes[i]);
 		}*/
 
 		//for (unsigned int i = 0; i < rootNode->GetChildCount(); i++)
@@ -374,7 +380,6 @@ void FBXLoader::LoadBinary(const char * _binName)
 
 		for (unsigned int i = 0; i < numMeshes; i++)
 		{
-
 			char name[128];
 			unsigned int uniqueSize;
 			unsigned int indiciesSize;
@@ -409,85 +414,19 @@ void FBXLoader::LoadBinary(const char * _binName)
 			vector<Joint> tempSkele;
 			tempSkele.resize(jointsSize);
 
-			//for (unsigned int j = 0; j < 1; j++)
-			//{
-			//	bin.read((char*)&tempSkele[j], sizeof(Joint));
-			//}
-			Joint tempJoint;
-			bin.read((char*)&tempJoint, sizeof(Joint));
+			for (unsigned int j = 0; j < jointsSize; j++)
+			{
+				bin.read((char*)&tempSkele[j], sizeof(Joint));
+			}
 			tempMesh.GetVertices() = tempVerts;
 			tempMesh.GetIndices() = tempInd;
-			//tempMesh.GetSkeleton() = tempSkele;
+			tempMesh.GetSkeleton() = tempSkele;
 
 			meshes.push_back(tempMesh);
 		}
 		bin.close();
 	}
-	for (size_t i = 0; i < meshes.size(); i++)
-	{
-		RenderSet renderSet;
-		renderSet.SetIndexBuffer(meshes[i].GetIndices());
-		vector<uniqueVertex> vertexes;
-		for (size_t j = 0; j < meshes[i].GetVertices().size(); j++)
-		{
-			uniqueVertex tempVertex;
-			tempVertex.position.x = meshes[i].GetVertices()[j].uVPos.x;
-			tempVertex.position.y = meshes[i].GetVertices()[j].uVPos.y;
-			tempVertex.position.z = meshes[i].GetVertices()[j].uVPos.z;
-			tempVertex.position.w = 1.0f;
-			tempVertex.normal.x = meshes[i].GetVertices()[j].uVNorm.x;
-			tempVertex.normal.y = meshes[i].GetVertices()[j].uVNorm.y;
-			tempVertex.normal.z = meshes[i].GetVertices()[j].uVNorm.z;
-			tempVertex.normal.w = 1;
-			tempVertex.texture.x = meshes[i].GetVertices()[j].textCoord.u;
-			tempVertex.texture.y = meshes[i].GetVertices()[j].textCoord.v;
-			vertexes.push_back(tempVertex);
-		}
-		renderSet.SetVertexBuffer(vertexes);
-		RenderMesh *meshR = new RenderMesh;
-		//meshR->meshIndexBuffer = renderSet.meshIndexBuffer;
-		//meshR->meshVertexBuffer = renderSet.meshVertexBuffer;
-		meshR->stride = sizeof(uniqueVertex);
-		meshR->SetVertexBuffer(vertexes);
-		meshR->SetIndexBuffer(meshes[i].GetIndices());
-		meshR->func = RenderMeshes;
-
-		RenderMaterial temp;
-		RenderShape shape;
-		XMFLOAT4X4 objectMatrix;
-		XMMATRIX tempMatrix = XMMatrixIdentity();
-		//XMMATRIX tempMatrix = XMMatrixRotationY(XMConvertToRadians(30));
-		XMStoreFloat4x4(&objectMatrix, tempMatrix);
-		objectMatrix._41 = -3;
-		shape.SetObjectsMatrix(objectMatrix);
-		shape.numIndices = meshes[i].GetIndices().size();
-		temp.AddShape(shape);
-
-		RenderTexture *texterR = new RenderTexture;
-		texterR->func = RenderTextures;//
-		DirectX::CreateDDSTextureFromFile(Renderer::device, L"TestCube.dds", NULL, &texterR->texture);
-		//DirectX::CreateDDSTextureFromFile(Renderer::device, L"Teddy_D.dds", NULL, &texterR->texture);
-
-		DirectX::CreateDDSTextureFromFile(Renderer::device, L"TestCube.dds", NULL, &temp.texture);
-		//DirectX::CreateDDSTextureFromFile(Renderer::device, L"Teddy_D.dds", NULL, &temp.texture);
-		renderSet.AddMaterial(temp);
-		Renderer::meshes.push_back(renderSet);
-
-
-
-		RenderObject *objectR = new RenderObject;
-		objectR->func = RenderAndMovement;
-		objectR->numIndices = meshes[i].GetIndices().size();
-		objectMatrix._41 = 3;
-		objectR->objectsWorld = objectMatrix;
-		if (Renderer::head == nullptr)
-			Renderer::head = meshR;
-		else
-			Renderer::head->next = meshR;
-		meshR->child = texterR;
-		texterR->child = objectR;
-	}
-
+	Renderer::Objects.push_back(meshes);
 }
 
 void FBXLoader::ProcessSkeletonHierarchy(FbxNode* _rootNodeIn)
@@ -510,7 +449,6 @@ void FBXLoader::ProcessSkeletonHierarchyRecursively(FbxNode* _nodeIn, unsigned i
 		temp = _nodeIn->GetName();
 		strcpy_s(currJoint.name, temp.c_str());
 		skeletonPTR->push_back(currJoint);
-		skeletonNodes.push_back(_nodeIn);
 	}
 	for (int i = 0; i < _nodeIn->GetChildCount(); ++i)
 	{
@@ -519,7 +457,7 @@ void FBXLoader::ProcessSkeletonHierarchyRecursively(FbxNode* _nodeIn, unsigned i
 }
 
 void FBXLoader::ProcessJointsAndAnimations(FbxMesh* _nodeIn)
-{	
+{
 	FbxMesh* currentMesh = _nodeIn;
 	unsigned int numDeformers = currentMesh->GetDeformerCount();
 	//FbxAMatrix geoTransform = GetGeometryTransformation(currentMesh); // Something the forums said to do for those random 1%
@@ -527,10 +465,10 @@ void FBXLoader::ProcessJointsAndAnimations(FbxMesh* _nodeIn)
 	for (unsigned int deformerIndex = 0; deformerIndex < numDeformers; ++deformerIndex)
 	{
 		FbxSkin* currentSkin = reinterpret_cast<FbxSkin*>(currentMesh->GetDeformer(deformerIndex, FbxDeformer::eSkin));
-		if (!currentSkin)
-		{
-			continue;
-		}
+		//if (!currentSkin)
+		//{
+		//	continue;
+		//}
 
 		unsigned int numClusters = currentSkin->GetClusterCount();
 		for (unsigned int clusterIndex = 0; clusterIndex < numClusters; ++clusterIndex)
@@ -593,7 +531,7 @@ unsigned int FBXLoader::FindJointIndexUsingName(const string& _JointNameIn)
 XMFLOAT4X4 FBXLoader::fbxToFloatMatrix(FbxAMatrix& _matrixIn)
 {
 	XMFLOAT4X4 temp;
-	_matrixIn = _matrixIn.Transpose();
+	//_matrixIn = _matrixIn.Transpose();
 
 	for (unsigned int i = 0; i < 4; i++)
 	{

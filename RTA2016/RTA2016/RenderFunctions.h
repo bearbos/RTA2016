@@ -14,6 +14,11 @@ void RenderStuff(RenderNode &_node)
 	Renderer::deviceContext->DrawIndexed(objectNode.numIndices, objectNode.startIndexLocation, objectNode.startVertLocation);
 }
 
+void DoNothing(RenderNode &_node)
+{
+
+}
+
 void RenderTextures(RenderNode &_node)
 {
 	RenderTexture &textureNode = (RenderTexture&)_node;

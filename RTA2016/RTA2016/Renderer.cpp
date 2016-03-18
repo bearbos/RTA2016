@@ -5,6 +5,7 @@
 #include "SpotLight.csh"
 #include "PointLight.csh"
 #include "DirLight.csh"
+#include "RenderFunctions.h"
 
 #define Release(x) { if(x) {x->Release(); x =0;} }
 ID3D11Device *Renderer::device = 0; //Released
@@ -35,10 +36,11 @@ int Renderer::whichLight = 0;//Doesn't need to be Released
 float Renderer::delta = 0; //Doesn't need to be Released
 ID3D11Buffer *Renderer::pointLightBuffer = 0; //Released
 ID3D11PixelShader *Renderer::pointLightShader = 0; //Released
-ID3D11PixelShader *Renderer::directionLightShader = 0;
-ID3D11Buffer *Renderer::directionLightBuffer = 0;
+ID3D11PixelShader *Renderer::directionLightShader = 0; //Released
+ID3D11Buffer *Renderer::directionLightBuffer = 0; //Released
 XMFLOAT4 Renderer::lightDirection;
 bool Renderer::pressed = false;
+std::vector<std::vector<Mesh>> Renderer::Objects;
 void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int windWidth)
 {
 	DXGI_SWAP_CHAIN_DESC chainDesc;
@@ -90,9 +92,9 @@ void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int win
 	projMatrix._34 = 1;
 	tempMatrix = XMMatrixIdentity();
 	XMStoreFloat4x4(&camera, tempMatrix);
-	camera._43 = -10.0f;
-	camera._42 = 10.0f;
-	XMStoreFloat4x4(&camera, XMMatrixMultiply(XMMatrixRotationX(XMConvertToRadians(45.0f)), XMLoadFloat4x4(&camera)));
+	camera._43 = -200.0f;
+	camera._42 = 100.0f;
+	//XMStoreFloat4x4(&camera, XMMatrixMultiply(XMMatrixRotationX(XMConvertToRadians(45.0f)), XMLoadFloat4x4(&camera)));
 	XMStoreFloat4x4(&viewMatrix, XMMatrixInverse(nullptr, XMLoadFloat4x4(&camera)));
 
 	D3D11_BUFFER_DESC worldConBuffDesc;
@@ -180,6 +182,73 @@ void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int win
 	lightDirection.z = 3.0f;
 	lightDirection.w = 0.0f;
 	XMStoreFloat4(&lightDirection, XMVector4Normalize(XMLoadFloat4(&lightDirection)));
+
+	for (size_t i = 0; i < Objects.size(); i++)
+	{
+		for (size_t j = 0; j < Objects[i].size(); j++)
+		{
+			vector<uniqueVertex> vertexes;
+			for (size_t k = 0; k < Objects[i][j].GetVertices().size(); k++)
+			{
+				uniqueVertex tempVertex;
+				tempVertex.position.x = Objects[i][j].GetVertices()[k].uVPos.x;
+				tempVertex.position.y = Objects[i][j].GetVertices()[k].uVPos.y;
+				tempVertex.position.z = Objects[i][j].GetVertices()[k].uVPos.z;
+				tempVertex.position.w = 1.0f;
+				tempVertex.normal.x = Objects[i][j].GetVertices()[k].uVNorm.x;
+				tempVertex.normal.y = Objects[i][j].GetVertices()[k].uVNorm.y;
+				tempVertex.normal.z = Objects[i][j].GetVertices()[k].uVNorm.z;
+				tempVertex.normal.w = 1;
+				tempVertex.texture.x = Objects[i][j].GetVertices()[k].textCoord.u;
+				tempVertex.texture.y = Objects[i][j].GetVertices()[k].textCoord.v;
+				vertexes.push_back(tempVertex);
+			}
+			RenderMesh *meshR = new RenderMesh;
+			meshR->stride = sizeof(uniqueVertex);
+			meshR->SetVertexBuffer(vertexes);
+			meshR->SetIndexBuffer(Objects[i][j].GetIndices());
+			meshR->func = RenderMeshes;
+			meshR->name = Objects[i][j].GetName();
+
+			RenderTexture *texterR = new RenderTexture;
+			texterR->func = RenderTextures;//
+			//DirectX::CreateDDSTextureFromFile(Renderer::device, L"TestCube.dds", NULL, &texterR->texture);
+			DirectX::CreateDDSTextureFromFile(Renderer::device, L"Teddy_D.dds", NULL, &texterR->texture);
+
+			XMFLOAT4X4 objectMatrix;
+			//XMMATRIX tempMatrix = XMMatrixIdentity();
+			XMMATRIX tempMatrix = XMMatrixRotationY(XMConvertToRadians(160));
+			XMStoreFloat4x4(&objectMatrix, tempMatrix);
+			objectMatrix._41 = -150.0f;
+
+			meshR->next = head;
+			head = meshR;
+			meshR->child = texterR;
+			switch (i)
+			{
+			case 1:
+				for (size_t a = 0; a < Objects[0][0].GetSkeleton().size(); a++)
+				{
+					RenderObject *objectR = new RenderObject;
+					objectR->func = RenderStuff;
+					objectR->numIndices = Objects[i][j].GetIndices().size();
+					objectMatrix = Objects[0][0].GetSkeleton()[a].GlobalBind;
+					objectMatrix._42 *= -1;
+					objectR->objectsWorld = objectMatrix;
+					objectR->next = texterR->child;
+					texterR->child = objectR;
+				}
+				break;
+			default:
+				RenderObject *objectR = new RenderObject;
+				objectR->func = RenderAndMovement;
+				objectR->numIndices = Objects[i][j].GetIndices().size();
+				texterR->child = objectR;
+				objectR->objectsWorld = objectMatrix;
+				break;
+			}
+		}
+	}
 }
 
 
@@ -233,7 +302,7 @@ void Renderer::Render()
 		break;
 	default:
 		break;
-	}	
+	}
 	deviceContext->PSSetSamplers(0, 1, &sampleState);
 	deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	deviceContext->RSSetState(rasterState);
