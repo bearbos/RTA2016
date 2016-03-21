@@ -26,6 +26,11 @@ struct BlendingIndexWeightPair
 	float BlendingIndex;
 	float BlendingWeight;
 };
+struct JointKeys
+{
+	float time;
+	XMFLOAT4X4 local;
+};
 struct Joint
 {
 	XMFLOAT4X4 World;
@@ -35,5 +40,5 @@ struct Joint
 	char name[128];
 	bool bDirty;
 	BlendingIndexWeightPair SkinWeight;
-
+	std::vector<JointKeys> frames;
 };
