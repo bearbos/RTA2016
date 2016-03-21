@@ -10,13 +10,13 @@ public:
 
 	Joint& GetCurrentWorld(int Num);
 	float GetTime();
-	void SetAnimation(const Animation*);
+	void SetAnimation(const Animation* _anim);
 	void SetTime(float _time);
 	void Update(float _time);
 
 private:
 
-	Animation* anim;
+	const Animation* anim;
 	unsigned int currFrame;
 	vector<Joint> world;
 
@@ -40,9 +40,9 @@ float  Interpolator::GetTime()
 	return 1;
 }
 
-void   Interpolator::SetAnimation(const Animation*)
+void   Interpolator::SetAnimation(const Animation* _anim)
 {
-
+	anim = _anim;
 }
 
 void   Interpolator::SetTime(float _time)
