@@ -158,7 +158,7 @@ void FBXLoader::FBXBinaryConvert(const char * _fileName, const char * _binName)
 		exit(-1);
 	}
 
-	FbxScene* scene = FbxScene::Create(sdkManager, "myScene");
+	scene = FbxScene::Create(sdkManager, "myScene");
 	importer->Import(scene);
 	importer->Destroy();  // Not sure I can call this here.
 
@@ -263,7 +263,19 @@ void FBXLoader::FBXBinaryConvert(const char * _fileName, const char * _binName)
 			}
 			for (unsigned int j = 0; j < jointsSize; j++)
 			{
-				bout.write((char*)&tempJoints[j], sizeof(Joint));
+				bout.write((char*)&tempJoints[j].World, sizeof(XMFLOAT4X4));
+				bout.write((char*)&tempJoints[j].Local, sizeof(XMFLOAT4X4));
+				bout.write((char*)&tempJoints[j].GlobalBind, sizeof(XMFLOAT4X4));
+				bout.write((char*)&tempJoints[j].bDirty, sizeof(bool));
+				bout.write((char*)&tempJoints[j].name, sizeof(128));
+				bout.write((char*)&tempJoints[j].parentIndex, sizeof(unsigned int));
+				bout.write((char*)&tempJoints[j].SkinWeight, sizeof(BlendingIndexWeightPair));
+				unsigned int numFrames = tempJoints[j].frames.size();
+				bout.write((char*)&numFrames, sizeof(unsigned int));
+				for (unsigned int  k = 0; k < numFrames; k++)
+				{
+					bout.write((char*)&tempJoints[j].frames[k], sizeof(JointKeys));
+				}
 			}
 
 		}
@@ -467,7 +479,20 @@ void FBXLoader::LoadBinary(const char * _binName)
 
 			for (unsigned int j = 0; j < jointsSize; j++)
 			{
-				bin.read((char*)&tempSkele[j], sizeof(Joint));
+				bin.read((char*)&tempSkele[j].World, sizeof(XMFLOAT4X4));
+				bin.read((char*)&tempSkele[j].Local, sizeof(XMFLOAT4X4));
+				bin.read((char*)&tempSkele[j].GlobalBind, sizeof(XMFLOAT4X4));
+				bin.read((char*)&tempSkele[j].bDirty, sizeof(bool));
+				bin.read((char*)&tempSkele[j].name, sizeof(128));
+				bin.read((char*)&tempSkele[j].parentIndex, sizeof(unsigned int));
+				bin.read((char*)&tempSkele[j].SkinWeight, sizeof(BlendingIndexWeightPair));
+				unsigned int numFrames;
+				bin.read((char*)&numFrames, sizeof(unsigned int));
+				tempSkele[j].frames.resize(numFrames);
+				for (unsigned int k = 0; k < numFrames; k++)
+				{
+					bin.read((char*)&tempSkele[j].frames[k], sizeof(JointKeys));
+				}
 			}
 			tempMesh.GetVertices() = tempVerts;
 			tempMesh.GetIndices() = tempInd;
@@ -545,7 +570,24 @@ void FBXLoader::ProcessJointsAndAnimations(FbxMesh* _nodeIn)
 				BlendingIndexWeightPair currentBlendingPair;
 				currentBlendingPair.BlendingIndex = (float)currentJointIndex;
 				currentBlendingPair.BlendingWeight = (float)currentCluster->GetControlPointWeights()[indeciesIndex];
-				// Stopped Here for now
+				skeletonPTR->operator[](currentJointIndex).SkinWeight = currentBlendingPair;
+			}
+			FbxAnimStack* animStack = scene->GetSrcObject<FbxAnimStack>();
+			if (!animStack)
+				continue;
+			FbxString stackName = animStack->GetName();
+			FbxTakeInfo* take = scene->GetTakeInfo(stackName);
+			FbxTime startFrame = take->mLocalTimeSpan.GetStart();
+			FbxTime endFrame = take->mLocalTimeSpan.GetStop();
+
+			for (FbxLongLong keyFrameIndex = startFrame.GetFrameCount(FbxTime::eFrames24); keyFrameIndex < endFrame.GetFrameCount(FbxTime::eFrames24); keyFrameIndex++)
+			{
+				FbxTime time;
+				time.SetFrame(keyFrameIndex, FbxTime::eFrames24);
+				JointKeys tempFrame;
+				tempFrame.time = (float)time.GetSecondDouble();
+				tempFrame.local = fbxToFloatMatrix(currentCluster->GetLink()->EvaluateGlobalTransform(time).Inverse());
+				skeletonPTR->operator[](currentJointIndex).frames.push_back(tempFrame);
 			}
 		}
 	}

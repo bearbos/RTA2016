@@ -19,6 +19,7 @@ public:
 	
 
 private:
+	FbxScene* scene;
 	vector<string> m_filePaths;
 	vector<XMFLOAT4X4> m_worldMatrices;
 	void FBXBinaryConvert(const char * _fileName, const char * _binName);
