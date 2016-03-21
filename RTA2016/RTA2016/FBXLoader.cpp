@@ -267,7 +267,7 @@ void FBXLoader::FBXBinaryConvert(const char * _fileName, const char * _binName)
 				bout.write((char*)&tempJoints[j].Local, sizeof(XMFLOAT4X4));
 				bout.write((char*)&tempJoints[j].GlobalBind, sizeof(XMFLOAT4X4));
 				bout.write((char*)&tempJoints[j].bDirty, sizeof(bool));
-				bout.write((char*)&tempJoints[j].name, sizeof(128));
+				bout.write((char*)&tempJoints[j].name, sizeof(char) * 128);
 				bout.write((char*)&tempJoints[j].parentIndex, sizeof(unsigned int));
 				bout.write((char*)&tempJoints[j].SkinWeight, sizeof(BlendingIndexWeightPair));
 				unsigned int numFrames = tempJoints[j].frames.size();
@@ -483,7 +483,7 @@ void FBXLoader::LoadBinary(const char * _binName)
 				bin.read((char*)&tempSkele[j].Local, sizeof(XMFLOAT4X4));
 				bin.read((char*)&tempSkele[j].GlobalBind, sizeof(XMFLOAT4X4));
 				bin.read((char*)&tempSkele[j].bDirty, sizeof(bool));
-				bin.read((char*)&tempSkele[j].name, sizeof(128));
+				bin.read((char*)&tempSkele[j].name, sizeof(char) * 128);
 				bin.read((char*)&tempSkele[j].parentIndex, sizeof(unsigned int));
 				bin.read((char*)&tempSkele[j].SkinWeight, sizeof(BlendingIndexWeightPair));
 				unsigned int numFrames;
@@ -523,6 +523,7 @@ void FBXLoader::ProcessSkeletonHierarchyRecursively(FbxNode* _nodeIn, unsigned i
 		Joint currJoint;
 		currJoint.parentIndex = _parentIndexIn;
 		temp = _nodeIn->GetName();
+		//temp.replace(temp.begin(), temp.end(), '\_', ' ');
 		strcpy_s(currJoint.name, temp.c_str());
 		skeletonPTR->push_back(currJoint);
 	}
