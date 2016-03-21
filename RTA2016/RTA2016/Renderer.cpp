@@ -94,6 +94,8 @@ void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int win
 	XMStoreFloat4x4(&camera, tempMatrix);
 	camera._43 = -200.0f;
 	camera._42 = 100.0f;
+	//camera._43 = -20.0f;
+	//camera._42 = 10.0f;
 	//XMStoreFloat4x4(&camera, XMMatrixMultiply(XMMatrixRotationX(XMConvertToRadians(45.0f)), XMLoadFloat4x4(&camera)));
 	XMStoreFloat4x4(&viewMatrix, XMMatrixInverse(nullptr, XMLoadFloat4x4(&camera)));
 
@@ -211,41 +213,53 @@ void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int win
 			meshR->name = Objects[i][j].GetName();
 
 			RenderTexture *texterR = new RenderTexture;
-			texterR->func = RenderTextures;//
-			//DirectX::CreateDDSTextureFromFile(Renderer::device, L"TestCube.dds", NULL, &texterR->texture);
-			DirectX::CreateDDSTextureFromFile(Renderer::device, L"Teddy_D.dds", NULL, &texterR->texture);
+			texterR->func = RenderTextures;
 
 			XMFLOAT4X4 objectMatrix;
 			//XMMATRIX tempMatrix = XMMatrixIdentity();
-			XMMATRIX tempMatrix = XMMatrixRotationY(XMConvertToRadians(160));
+			XMMATRIX tempMatrix = XMMatrixRotationY(XMConvertToRadians(180));
 			XMStoreFloat4x4(&objectMatrix, tempMatrix);
-			objectMatrix._41 = -150.0f;
+			//objectMatrix._41 = -150.0f;
 
 			meshR->next = head;
 			head = meshR;
 			meshR->child = texterR;
-			switch (i)
+			if (meshR->name == "Teddy_Idle.tribal")
 			{
-			case 1:
-				for (size_t a = 0; a < Objects[0][0].GetSkeleton().size(); a++)
-				{
-					RenderObject *objectR = new RenderObject;
-					objectR->func = RenderStuff;
-					objectR->numIndices = Objects[i][j].GetIndices().size();
-					objectMatrix = Objects[0][0].GetSkeleton()[a].GlobalBind;
-					objectMatrix._42 *= -1;
-					objectR->objectsWorld = objectMatrix;
-					objectR->next = texterR->child;
-					texterR->child = objectR;
-				}
-				break;
-			default:
+				DirectX::CreateDDSTextureFromFile(Renderer::device, L"Teddy_D.dds", NULL, &texterR->texture);
+			}
+			else if (meshR->name == "Box_BindPose.tribal" || meshR->name == "sphere.tribal")
+			{
+				DirectX::CreateDDSTextureFromFile(Renderer::device, L"TestCube.dds", NULL, &texterR->texture);
+			}
+			if (meshR->name == "Teddy_Idle.tribal" || meshR->name == "Box_BindPose.tribal")
+			{
 				RenderObject *objectR = new RenderObject;
 				objectR->func = RenderAndMovement;
 				objectR->numIndices = Objects[i][j].GetIndices().size();
 				texterR->child = objectR;
 				objectR->objectsWorld = objectMatrix;
-				break;
+			}
+			else if (meshR->name == "sphere.tribal")
+			{
+				for (size_t o = 0; o < Objects.size(); o++)
+				{
+					if (Objects[o][0].GetName() == "Teddy_Idle.tribal" || Objects[o][0].GetName() == "Box_BindPose.tribal")
+					{
+						for (size_t a = 0; a < Objects[o][0].GetSkeleton().size(); a++)
+						{
+							RenderObject *objectR = new RenderObject;
+							objectR->func = DoNothing;
+							objectR->numIndices = Objects[i][j].GetIndices().size();
+							objectMatrix = Objects[o][0].GetSkeleton()[a].GlobalBind;
+							objectMatrix._42 *= -1;
+							objectR->objectsWorld = objectMatrix;
+							objectR->next = texterR->child;
+							texterR->child = objectR;
+						}
+						break;
+					}
+				}
 			}
 		}
 	}
@@ -456,7 +470,7 @@ void Renderer::Update()
 	{
 		whichLight = 3;
 	}
-	if (GetAsyncKeyState(VK_TAB) && !pressed)
+	if (GetAsyncKeyState(VK_TAB) && !pressed) //increments lights
 	{
 		whichLight++;
 		whichLight %= 4;
@@ -465,5 +479,51 @@ void Renderer::Update()
 	else if (!GetAsyncKeyState(VK_TAB) && pressed)
 	{
 		pressed = false;
+	}
+	if (GetAsyncKeyState('N'))
+	{
+		if (((RenderMesh*)head)->name == "Teddy_Idle.tribal" || ((RenderMesh*)head)->name == "Box_BindPose.tribal")
+		{
+			head->child->child->func = RenderStuff;
+			RenderNode *itr = head->next->child->child;
+			while (itr)
+			{
+				itr->func = DoNothing;
+				itr = itr->next;
+			}
+		}
+		else
+		{
+			head->next->child->child->func = RenderStuff;
+			RenderNode *itr = head->child->child;
+			while (itr)
+			{
+				itr->func = DoNothing;
+				itr = itr->next;
+			}
+		}
+	}
+	if (GetAsyncKeyState('J'))
+	{
+		if (((RenderMesh*)head)->name == "Teddy_Idle.tribal" || ((RenderMesh*)head)->name == "Box_BindPose.tribal")
+		{
+			head->child->child->func = DoNothing;
+			RenderNode *itr = head->next->child->child;
+			while (itr)
+			{
+				itr->func = RenderStuff;
+				itr = itr->next;
+			}
+		}
+		else
+		{
+			head->next->child->child->func = DoNothing;
+			RenderNode *itr = head->child->child;
+			while (itr)
+			{
+				itr->func = RenderStuff;
+				itr = itr->next;
+			}
+		}
 	}
 }
