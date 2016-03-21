@@ -13,8 +13,11 @@ public:
 	int GetNumJoints();
 	void Init(int _num, float _time);
 	const float GetTotalTime();
+	int GetNumKeyFrames();
 
 	KeyFrame* keyFrames;
+	float AnimStartTime;
+	bool completed = true;
 
 private:
 
@@ -58,4 +61,9 @@ void Animation::Init(int _num, float _time)
 const float Animation::GetTotalTime()
 {
 	return totalTime;
+}
+
+int Animation::GetNumKeyFrames()
+{
+	return numKeyFrames;
 }
