@@ -105,8 +105,11 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Animation.h" />
     <ClInclude Include="FBXLoader.h" />
     <ClInclude Include="Defines.h" />
+    <ClInclude Include="Interpolator.h" />
+    <ClInclude Include="keyFrame.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="RenderFunctions.h" />

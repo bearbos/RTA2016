@@ -2,11 +2,11 @@
 
 #include "Animation.h"
 
-class Intterpolator
+class Interpolator
 {
 public:
-	Intterpolator();
-	~Intterpolator();
+	Interpolator();
+	~Interpolator();
 
 	Joint& GetCurrentWorld(int Num);
 	float GetTime();
@@ -22,11 +22,35 @@ private:
 
 };
 
-Intterpolator::Intterpolator()
+Interpolator::Interpolator()
 {
 }
 
-Intterpolator::~Intterpolator()
+Interpolator::~Interpolator()
 {
 }
 
+Joint& Interpolator::GetCurrentWorld(int Num)
+{
+	return world[0];
+}
+
+float  Interpolator::GetTime()
+{
+	return 1;
+}
+
+void   Interpolator::SetAnimation(const Animation*)
+{
+
+}
+
+void   Interpolator::SetTime(float _time)
+{
+
+}
+
+void   Interpolator::Update(float _time)
+{
+
+}
