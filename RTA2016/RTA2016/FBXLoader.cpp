@@ -10,81 +10,81 @@ FBXLoader::~FBXLoader()
 
 void FBXLoader::ReadIn(const char * _fileName)
 {
-	//fstream	fin;
-	//string filepath = _fileName;
+	fstream	fin;
+	string filepath = _fileName;
 
-	//if (strlen(_fileName) != 0)
-	//{
-	//	fin.open(filepath, std::ios_base::in);
-	//}
+	if (strlen(_fileName) != 0)
+	{
+		fin.open(filepath, std::ios_base::in);
+	}
 
-	//if (fin.is_open())
-	//{
-	//	while (!fin.eof())
-	//	{
-	//		char lineHeader[128];
-	//		fin.getline(lineHeader, 128);
+	if (fin.is_open())
+	{
+		while (!fin.eof())
+		{
+			char lineHeader[128];
+			fin.getline(lineHeader, 128);
 
-	//		char _11[5];
-	//		char _21[5];
-	//		char _31[5];
-	//		char _41[5];
-	//		char _12[5];
-	//		char _22[5];
-	//		char _32[5];
-	//		char _42[5];
-	//		char _13[5];
-	//		char _23[5];
-	//		char _33[5];
-	//		char _43[5];
-	//		char _14[5];
-	//		char _24[5];
-	//		char _34[5];
-	//		char _44[5];
+			char _11[5];
+			char _21[5];
+			char _31[5];
+			char _41[5];
+			char _12[5];
+			char _22[5];
+			char _32[5];
+			char _42[5];
+			char _13[5];
+			char _23[5];
+			char _33[5];
+			char _43[5];
+			char _14[5];
+			char _24[5];
+			char _34[5];
+			char _44[5];
 
-	//		fin.getline(_11, 5);
-	//		fin.getline(_12, 5);
-	//		fin.getline(_13, 5);
-	//		fin.getline(_14, 5);
-	//		fin.getline(_21, 5);
-	//		fin.getline(_22, 5);
-	//		fin.getline(_23, 5);
-	//		fin.getline(_24, 5);
-	//		fin.getline(_31, 5);
-	//		fin.getline(_32, 5);
-	//		fin.getline(_33, 5);
-	//		fin.getline(_34, 5);
-	//		fin.getline(_41, 5);
-	//		fin.getline(_42, 5);
-	//		fin.getline(_43, 5);
-	//		fin.getline(_44, 5);
-
-
-	//		XMFLOAT4X4 tempMat;
-
-	//		tempMat._11 = (float)atof(_11);
-	//		tempMat._21 = (float)atof(_21);
-	//		tempMat._31 = (float)atof(_31);
-	//		tempMat._41 = (float)atof(_41);
-	//		tempMat._12 = (float)atof(_12);
-	//		tempMat._22 = (float)atof(_22);
-	//		tempMat._32 = (float)atof(_32);
-	//		tempMat._42 = (float)atof(_42);
-	//		tempMat._13 = (float)atof(_13);
-	//		tempMat._23 = (float)atof(_23);
-	//		tempMat._33 = (float)atof(_33);
-	//		tempMat._43 = (float)atof(_43);
-	//		tempMat._14 = (float)atof(_14);
-	//		tempMat._24 = (float)atof(_24);
-	//		tempMat._34 = (float)atof(_34);
-	//		tempMat._44 = (float)atof(_44);
+			fin.getline(_11, 5);
+			fin.getline(_12, 5);
+			fin.getline(_13, 5);
+			fin.getline(_14, 5);
+			fin.getline(_21, 5);
+			fin.getline(_22, 5);
+			fin.getline(_23, 5);
+			fin.getline(_24, 5);
+			fin.getline(_31, 5);
+			fin.getline(_32, 5);
+			fin.getline(_33, 5);
+			fin.getline(_34, 5);
+			fin.getline(_41, 5);
+			fin.getline(_42, 5);
+			fin.getline(_43, 5);
+			fin.getline(_44, 5);
 
 
-	//		m_filePaths.push_back((string)lineHeader);
-	//		m_worldMatrices.push_back(tempMat);
-	//	}
-	//}
-	m_filePaths.push_back("Teddy_Idle");
+			XMFLOAT4X4 tempMat;
+
+			tempMat._11 = (float)atof(_11);
+			tempMat._21 = (float)atof(_21);
+			tempMat._31 = (float)atof(_31);
+			tempMat._41 = (float)atof(_41);
+			tempMat._12 = (float)atof(_12);
+			tempMat._22 = (float)atof(_22);
+			tempMat._32 = (float)atof(_32);
+			tempMat._42 = (float)atof(_42);
+			tempMat._13 = (float)atof(_13);
+			tempMat._23 = (float)atof(_23);
+			tempMat._33 = (float)atof(_33);
+			tempMat._43 = (float)atof(_43);
+			tempMat._14 = (float)atof(_14);
+			tempMat._24 = (float)atof(_24);
+			tempMat._34 = (float)atof(_34);
+			tempMat._44 = (float)atof(_44);
+
+
+			m_filePaths.push_back((string)lineHeader);
+			m_worldMatrices.push_back(tempMat);
+		}
+	}
+	//m_filePaths.push_back("Teddy_Idle");
 	//m_filePaths.push_back("Box_BindPose");
 	m_filePaths.push_back("sphere");
 	//m_filePaths.push_back("Box_BindPose");
