@@ -1,4 +1,6 @@
 #pragma once
+#include "Interpolator.h"
+
 class RenderSet;
 class RenderNode;
 class XTime;
@@ -47,5 +49,6 @@ public:
 	static void Render();
 	static void ShutDown();
 	static void Update();
+	static Interpolator interp;
 };
 

@@ -41,6 +41,8 @@ ID3D11Buffer *Renderer::directionLightBuffer = 0; //Released
 XMFLOAT4 Renderer::lightDirection;
 bool Renderer::pressed = false;
 std::vector<std::vector<Mesh>> Renderer::Objects;
+Interpolator Renderer::interp;
+
 void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int windWidth)
 {
 	DXGI_SWAP_CHAIN_DESC chainDesc;
@@ -400,6 +402,8 @@ void Renderer::Update()
 	XMStoreFloat4x4(&rotationX, tempMatrix);
 	XMStoreFloat4x4(&rotationY, tempMatrix);
 
+	
+
 	POINT currMousePos;
 	GetCursorPos(&currMousePos);
 	if (GetAsyncKeyState('W'))
@@ -526,4 +530,6 @@ void Renderer::Update()
 			}
 		}
 	}
+
+	
 }
