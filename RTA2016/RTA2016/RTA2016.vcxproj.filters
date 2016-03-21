@@ -57,6 +57,12 @@
     <ClInclude Include="RenderFunctions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="XTime.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Timer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -83,6 +89,9 @@
     <ClCompile Include="Mesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="XTime.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RTA2016.rc">
@@ -100,5 +109,8 @@
   <ItemGroup>
     <FxCompile Include="VertexShader.hlsl" />
     <FxCompile Include="PixelShader.hlsl" />
+    <FxCompile Include="SpotLight.hlsl" />
+    <FxCompile Include="PointLight.hlsl" />
+    <FxCompile Include="DirLight.hlsl" />
   </ItemGroup>
 </Project>

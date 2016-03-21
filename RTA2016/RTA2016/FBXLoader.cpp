@@ -1,5 +1,4 @@
 #include "FBXLoader.h"
-#include "RenderFunctions.h"
 FBXLoader::FBXLoader()
 {
 
@@ -11,110 +10,83 @@ FBXLoader::~FBXLoader()
 
 void FBXLoader::ReadIn(const char * _fileName)
 {
-	/*FILE * file;
-	fopen_s(&file, _fileName, "r");
+	//fstream	fin;
+	//string filepath = _fileName;
+
+	//if (strlen(_fileName) != 0)
+	//{
+	//	fin.open(filepath, std::ios_base::in);
+	//}
+
+	//if (fin.is_open())
+	//{
+	//	while (!fin.eof())
+	//	{
+	//		char lineHeader[128];
+	//		fin.getline(lineHeader, 128);
+
+	//		char _11[5];
+	//		char _21[5];
+	//		char _31[5];
+	//		char _41[5];
+	//		char _12[5];
+	//		char _22[5];
+	//		char _32[5];
+	//		char _42[5];
+	//		char _13[5];
+	//		char _23[5];
+	//		char _33[5];
+	//		char _43[5];
+	//		char _14[5];
+	//		char _24[5];
+	//		char _34[5];
+	//		char _44[5];
+
+	//		fin.getline(_11, 5);
+	//		fin.getline(_12, 5);
+	//		fin.getline(_13, 5);
+	//		fin.getline(_14, 5);
+	//		fin.getline(_21, 5);
+	//		fin.getline(_22, 5);
+	//		fin.getline(_23, 5);
+	//		fin.getline(_24, 5);
+	//		fin.getline(_31, 5);
+	//		fin.getline(_32, 5);
+	//		fin.getline(_33, 5);
+	//		fin.getline(_34, 5);
+	//		fin.getline(_41, 5);
+	//		fin.getline(_42, 5);
+	//		fin.getline(_43, 5);
+	//		fin.getline(_44, 5);
 
 
+	//		XMFLOAT4X4 tempMat;
 
-	if (file == NULL)
-	{
-		return;
-	}
-
-	while (true)
-	{
-		char lineHeader[128];
-		int res = fscanf_s(file, "%s", lineHeader);
-		if (res == EOF)
-		{
-			break;
-		}
-
-		XMFLOAT4X4 tempMat;
-		fscanf_s(file, "%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f",
-			&tempMat._11, &tempMat._12, &tempMat._13, &tempMat._14,
-			&tempMat._21, &tempMat._22, &tempMat._23, &tempMat._24,
-			&tempMat._31, &tempMat._32, &tempMat._33, &tempMat._34,
-			&tempMat._41, &tempMat._42, &tempMat._43, &tempMat._44);
-
-	m_filePaths.push_back((string)lineHeader);
-
-	}*/
-
-	fstream	fin;
-	string filepath = _fileName;
-
-	if (strlen(_fileName) != 0)
-	{
-		fin.open(filepath,  std::ios_base::in);
-	}
-
-	if (fin.is_open())
-	{
-		while (!fin.eof())
-		{
-			char lineHeader[128];
-			fin.getline(lineHeader, 128);
-
-			char _11[5];
-			char _21[5];
-			char _31[5];
-			char _41[5];
-			char _12[5];
-			char _22[5];
-			char _32[5];
-			char _42[5];
-			char _13[5];
-			char _23[5];
-			char _33[5];
-			char _43[5];
-			char _14[5];
-			char _24[5];
-			char _34[5];
-			char _44[5];
-
-			fin.getline(_11, 5);
-			fin.getline(_12, 5);
-			fin.getline(_13, 5);
-			fin.getline(_14, 5);
-			fin.getline(_21, 5);
-			fin.getline(_22, 5);
-			fin.getline(_23, 5);
-			fin.getline(_24, 5);
-			fin.getline(_31, 5);
-			fin.getline(_32, 5);
-			fin.getline(_33, 5);
-			fin.getline(_34, 5);
-			fin.getline(_41, 5);
-			fin.getline(_42, 5);
-			fin.getline(_43, 5);
-			fin.getline(_44, 5);
+	//		tempMat._11 = (float)atof(_11);
+	//		tempMat._21 = (float)atof(_21);
+	//		tempMat._31 = (float)atof(_31);
+	//		tempMat._41 = (float)atof(_41);
+	//		tempMat._12 = (float)atof(_12);
+	//		tempMat._22 = (float)atof(_22);
+	//		tempMat._32 = (float)atof(_32);
+	//		tempMat._42 = (float)atof(_42);
+	//		tempMat._13 = (float)atof(_13);
+	//		tempMat._23 = (float)atof(_23);
+	//		tempMat._33 = (float)atof(_33);
+	//		tempMat._43 = (float)atof(_43);
+	//		tempMat._14 = (float)atof(_14);
+	//		tempMat._24 = (float)atof(_24);
+	//		tempMat._34 = (float)atof(_34);
+	//		tempMat._44 = (float)atof(_44);
 
 
-			XMFLOAT4X4 tempMat;
-
-			tempMat._11 = (float)atof(_11);
-			tempMat._21 = (float)atof(_21);
-			tempMat._31 = (float)atof(_31);
-			tempMat._41 = (float)atof(_41);
-			tempMat._12 = (float)atof(_12);
-			tempMat._22 = (float)atof(_22);
-			tempMat._32 = (float)atof(_32);
-			tempMat._42 = (float)atof(_42);
-			tempMat._13 = (float)atof(_13);
-			tempMat._23 = (float)atof(_23);
-			tempMat._33 = (float)atof(_33);
-			tempMat._43 = (float)atof(_43);
-			tempMat._14 = (float)atof(_14);
-			tempMat._24 = (float)atof(_24);
-			tempMat._34 = (float)atof(_34);
-			tempMat._44 = (float)atof(_44);
-				
-				
-			m_filePaths.push_back((string)lineHeader);
-			m_worldMatrices.push_back(tempMat);
-		}
-	}
+	//		m_filePaths.push_back((string)lineHeader);
+	//		m_worldMatrices.push_back(tempMat);
+	//	}
+	//}
+	m_filePaths.push_back("Teddy_Idle");
+	//m_filePaths.push_back("Box_BindPose");
+	m_filePaths.push_back("sphere");
 	//m_filePaths.push_back("Box_BindPose");
 
 }
@@ -222,14 +194,20 @@ void FBXLoader::FBXBinaryConvert(const char * _fileName, const char * _binName)
 		skeletonPTR = &mesh.GetSkeleton();
 		skeletonNodes.clear();
 		ProcessSkeletonHierarchy(rootNode);
+		for (size_t j = 0; j < skeletonPTR->size(); j++)
+		{
+			XMStoreFloat4x4(&skeletonPTR->operator[](j).World, XMMatrixIdentity());
+			XMStoreFloat4x4(&skeletonPTR->operator[](j).Local, XMMatrixIdentity());
+			XMStoreFloat4x4(&skeletonPTR->operator[](j).GlobalBind, XMMatrixIdentity());
+		}
 		ProcessJointsAndAnimations(meshAttribute);
 		/*for (unsigned int i = 0; i < skeletonPTR->size(); i++)
 		{
-			if (!skeletonNodes[i]->GetMesh())
-			{
-				continue;
-			}
-			ProcessJointsAndAnimations(skeletonNodes[i]);
+		if (!skeletonNodes[i]->GetMesh())
+		{
+		continue;
+		}
+		ProcessJointsAndAnimations(skeletonNodes[i]);
 		}*/
 
 		//for (unsigned int i = 0; i < rootNode->GetChildCount(); i++)
@@ -283,7 +261,6 @@ void FBXLoader::FBXBinaryConvert(const char * _fileName, const char * _binName)
 			{
 				bout.write((char*)&tempInd[j], sizeof(unsigned int));
 			}
-
 			for (unsigned int j = 0; j < jointsSize; j++)
 			{
 				bout.write((char*)&tempJoints[j], sizeof(Joint));
@@ -454,7 +431,6 @@ void FBXLoader::LoadBinary(const char * _binName)
 
 		for (unsigned int i = 0; i < numMeshes; i++)
 		{
-
 			char name[128];
 			unsigned int uniqueSize;
 			unsigned int indiciesSize;
@@ -468,7 +444,7 @@ void FBXLoader::LoadBinary(const char * _binName)
 			bin.read((char*)&jointsSize, sizeof(unsigned int));
 
 			Mesh tempMesh;
-			tempMesh.GetName() = name;
+			tempMesh.GetName() = _binName;
 
 			vector<Mesh::UniqueMeshVertex> tempVerts;
 			tempVerts.resize(uniqueSize);
@@ -489,82 +465,19 @@ void FBXLoader::LoadBinary(const char * _binName)
 			vector<Joint> tempSkele;
 			tempSkele.resize(jointsSize);
 
-			//for (unsigned int j = 0; j < 1; j++)
-			//{
-			//	bin.read((char*)&tempSkele[j], sizeof(Joint));
-			//}
-			Joint tempJoint;
-			bin.read((char*)&tempJoint, sizeof(Joint));
+			for (unsigned int j = 0; j < jointsSize; j++)
+			{
+				bin.read((char*)&tempSkele[j], sizeof(Joint));
+			}
 			tempMesh.GetVertices() = tempVerts;
 			tempMesh.GetIndices() = tempInd;
-			//tempMesh.GetSkeleton() = tempSkele;
+			tempMesh.GetSkeleton() = tempSkele;
 
 			meshes.push_back(tempMesh);
 		}
 		bin.close();
 	}
-	for (size_t i = 0; i < meshes.size(); i++)
-	{
-		RenderSet renderSet;
-		renderSet.SetIndexBuffer(meshes[i].GetIndices());
-		vector<uniqueVertex> vertexes;
-		for (size_t j = 0; j < meshes[i].GetVertices().size(); j++)
-		{
-			uniqueVertex tempVertex;
-			tempVertex.position.x = meshes[i].GetVertices()[j].uVPos.x;
-			tempVertex.position.y = meshes[i].GetVertices()[j].uVPos.y;
-			tempVertex.position.z = meshes[i].GetVertices()[j].uVPos.z;
-			tempVertex.position.w = 1.0f;
-			tempVertex.normal.x = meshes[i].GetVertices()[j].uVNorm.x;
-			tempVertex.normal.y = meshes[i].GetVertices()[j].uVNorm.y;
-			tempVertex.normal.z = meshes[i].GetVertices()[j].uVNorm.z;
-			tempVertex.normal.w = 1;
-			tempVertex.texture.x = meshes[i].GetVertices()[j].textCoord.u;
-			tempVertex.texture.y = meshes[i].GetVertices()[j].textCoord.v;
-			vertexes.push_back(tempVertex);
-		}
-		renderSet.SetVertexBuffer(vertexes);
-		RenderMesh *meshR = new RenderMesh;
-		//meshR->meshIndexBuffer = renderSet.meshIndexBuffer;
-		//meshR->meshVertexBuffer = renderSet.meshVertexBuffer;
-		meshR->stride = sizeof(uniqueVertex);
-		meshR->SetVertexBuffer(vertexes);
-		meshR->SetIndexBuffer(meshes[i].GetIndices());
-		meshR->func = RenderMeshes;
-
-		RenderMaterial temp;
-		RenderShape shape;
-		XMFLOAT4X4 objectMatrix;
-		XMMATRIX tempMatrix = XMMatrixIdentity();
-		//XMMATRIX tempMatrix = XMMatrixRotationY(XMConvertToRadians(30));
-		XMStoreFloat4x4(&objectMatrix, tempMatrix);
-		shape.SetObjectsMatrix(objectMatrix);
-		shape.numIndices = meshes[i].GetIndices().size();
-		temp.AddShape(shape);
-
-		RenderTexture *texterR = new RenderTexture;
-		texterR->func = RenderTextures;
-		DirectX::CreateDDSTextureFromFile(Renderer::device, L"TestCube.dds", NULL, &texterR->texture);
-
-		DirectX::CreateDDSTextureFromFile(Renderer::device, L"TestCube.dds", NULL, &temp.texture);
-		renderSet.AddMaterial(temp);
-		Renderer::meshes.push_back(renderSet);
-
-
-
-		RenderObject *objectR = new RenderObject;
-		objectR->func = RenderStuff;
-		objectR->numIndices = meshes[i].GetIndices().size();
-		objectMatrix._41 = 3;
-		objectR->objectsWorld = objectMatrix;
-		if (Renderer::head == nullptr)
-			Renderer::head = meshR;
-		else
-			Renderer::head->next = meshR;
-		meshR->child = texterR;
-		texterR->child = objectR;
-	}
-
+	Renderer::Objects.push_back(meshes);
 }
 
 void FBXLoader::ProcessSkeletonHierarchy(FbxNode* _rootNodeIn)
@@ -587,7 +500,6 @@ void FBXLoader::ProcessSkeletonHierarchyRecursively(FbxNode* _nodeIn, unsigned i
 		temp = _nodeIn->GetName();
 		strcpy_s(currJoint.name, temp.c_str());
 		skeletonPTR->push_back(currJoint);
-		skeletonNodes.push_back(_nodeIn);
 	}
 	for (int i = 0; i < _nodeIn->GetChildCount(); ++i)
 	{
@@ -596,7 +508,7 @@ void FBXLoader::ProcessSkeletonHierarchyRecursively(FbxNode* _nodeIn, unsigned i
 }
 
 void FBXLoader::ProcessJointsAndAnimations(FbxMesh* _nodeIn)
-{	
+{
 	FbxMesh* currentMesh = _nodeIn;
 	unsigned int numDeformers = currentMesh->GetDeformerCount();
 	//FbxAMatrix geoTransform = GetGeometryTransformation(currentMesh); // Something the forums said to do for those random 1%
@@ -604,10 +516,10 @@ void FBXLoader::ProcessJointsAndAnimations(FbxMesh* _nodeIn)
 	for (unsigned int deformerIndex = 0; deformerIndex < numDeformers; ++deformerIndex)
 	{
 		FbxSkin* currentSkin = reinterpret_cast<FbxSkin*>(currentMesh->GetDeformer(deformerIndex, FbxDeformer::eSkin));
-		if (!currentSkin)
-		{
-			continue;
-		}
+		//if (!currentSkin)
+		//{
+		//	continue;
+		//}
 
 		unsigned int numClusters = currentSkin->GetClusterCount();
 		for (unsigned int clusterIndex = 0; clusterIndex < numClusters; ++clusterIndex)
@@ -670,7 +582,7 @@ unsigned int FBXLoader::FindJointIndexUsingName(const string& _JointNameIn)
 XMFLOAT4X4 FBXLoader::fbxToFloatMatrix(FbxAMatrix& _matrixIn)
 {
 	XMFLOAT4X4 temp;
-	_matrixIn = _matrixIn.Transpose();
+	//_matrixIn = _matrixIn.Transpose();
 
 	for (unsigned int i = 0; i < 4; i++)
 	{

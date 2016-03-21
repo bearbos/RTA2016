@@ -31,12 +31,9 @@ struct Joint
 	XMFLOAT4X4 World;
 	XMFLOAT4X4 Local;
 	XMFLOAT4X4 GlobalBind;
-	//FbxNode* Node;
-	//Joint * parentPtr;
 	unsigned int parentIndex;
 	char name[128];
 	bool bDirty;
-	//std::vector<Joint *> children;
 	BlendingIndexWeightPair SkinWeight;
 
 };

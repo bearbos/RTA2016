@@ -2,27 +2,45 @@
 #include "Renderer.h"
 #include "VertexShader.csh"
 #include "PixelShader.csh"
+#include "SpotLight.csh"
+#include "PointLight.csh"
+#include "DirLight.csh"
+#include "RenderFunctions.h"
 
 #define Release(x) { if(x) {x->Release(); x =0;} }
-ID3D11Device *Renderer::device = 0;
-IDXGISwapChain *Renderer::swapChain = 0;
-ID3D11DeviceContext *Renderer::deviceContext = 0;
-D3D11_VIEWPORT Renderer::mainViewPort;
-ID3D11RenderTargetView *Renderer::renderTargetView = 0;
-ID3D11Texture2D *Renderer::depthStencilPointer = 0;
-ID3D11DepthStencilView *Renderer::depthStencilViewport = 0;
-XMFLOAT4X4 Renderer::viewMatrix;
-XMFLOAT4X4 Renderer::projMatrix;
-ID3D11Buffer *Renderer::viewProjConBuffer = 0;
-ID3D11Buffer *Renderer::worldCOnBuffer = 0;
-ID3D11InputLayout *Renderer::vertexLayout = 0;
-ID3D11VertexShader *Renderer::vertexShader = 0;
-ID3D11PixelShader *Renderer::pixelShader = 0;
-ID3D11SamplerState *Renderer::sampleState = 0;
-ID3D11RasterizerState *Renderer::rasterState = 0;
-std::vector<RenderSet> Renderer::meshes;
-ID3D11BlendState *Renderer::blendState = 0;
-RenderNode *Renderer::head = 0;
+ID3D11Device *Renderer::device = 0; //Released
+IDXGISwapChain *Renderer::swapChain = 0; //Released
+ID3D11DeviceContext *Renderer::deviceContext = 0; //Released
+D3D11_VIEWPORT Renderer::mainViewPort; //Doesn't need to be Released
+ID3D11RenderTargetView *Renderer::renderTargetView = 0; //Released
+ID3D11Texture2D *Renderer::depthStencilPointer = 0; //Released
+ID3D11DepthStencilView *Renderer::depthStencilViewport = 0; //Released
+XMFLOAT4X4 Renderer::viewMatrix;//Doesn't need to be Released
+XMFLOAT4X4 Renderer::projMatrix;//Doesn't need to be Released
+ID3D11Buffer *Renderer::viewProjConBuffer = 0; //Released
+ID3D11Buffer *Renderer::worldCOnBuffer = 0; //Released
+ID3D11Buffer *Renderer::spotLightBuffer = 0; //Released
+ID3D11InputLayout *Renderer::vertexLayout = 0; //Released
+ID3D11VertexShader *Renderer::vertexShader = 0; //Released
+ID3D11PixelShader *Renderer::pixelShader = 0; //Released
+ID3D11PixelShader *Renderer::spotLightShader = 0; //Released
+ID3D11SamplerState *Renderer::sampleState = 0; //Released
+ID3D11RasterizerState *Renderer::rasterState = 0; //Released
+std::vector<RenderSet> Renderer::meshes; //Doesn't need to be Released
+ID3D11BlendState *Renderer::blendState = 0; //Released
+RenderNode *Renderer::head = 0; //Doesn't need to be Released
+XMFLOAT4X4 Renderer::camera; //Doesn't need to be Released
+POINT Renderer::prevMouseLoc; //Doesn't need to be Released
+Timer Renderer::clock; //Doesn't need to be Released
+int Renderer::whichLight = 0;//Doesn't need to be Released
+float Renderer::delta = 0; //Doesn't need to be Released
+ID3D11Buffer *Renderer::pointLightBuffer = 0; //Released
+ID3D11PixelShader *Renderer::pointLightShader = 0; //Released
+ID3D11PixelShader *Renderer::directionLightShader = 0; //Released
+ID3D11Buffer *Renderer::directionLightBuffer = 0; //Released
+XMFLOAT4 Renderer::lightDirection;
+bool Renderer::pressed = false;
+std::vector<std::vector<Mesh>> Renderer::Objects;
 void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int windWidth)
 {
 	DXGI_SWAP_CHAIN_DESC chainDesc;
@@ -61,9 +79,9 @@ void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int win
 	hResult = device->CreateBuffer(&VPBuffDesc, NULL, &viewProjConBuffer);
 
 
-	XMMATRIX tempMatrix = XMMatrixIdentity();//XMMatrixPerspectiveFovLH(XMConvertToRadians(90), (float)windWidth / (float)windHeight, 0.1f, 100.0f);
+	XMMATRIX tempMatrix = XMMatrixIdentity();
 	XMStoreFloat4x4(&projMatrix, tempMatrix);
-	float yscale = 1.0f / tan(XMConvertToRadians(32.5));//cos(XMConvertToRadians(32.5)) / sin(XMConvertToRadians(32.5));
+	float yscale = 1.0f / tan(XMConvertToRadians(32.5));
 	float xScale = yscale / ((float)windWidth / ((float)windHeight));
 
 	projMatrix._11 = xScale;
@@ -73,11 +91,13 @@ void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int win
 	projMatrix._44 = 0;
 	projMatrix._34 = 1;
 	tempMatrix = XMMatrixIdentity();
-	XMStoreFloat4x4(&viewMatrix, tempMatrix);
-	viewMatrix._43 = -200.0f;
-	viewMatrix._42 = 100.0f;
-	//XMStoreFloat4x4(&viewMatrix, XMMatrixMultiply(XMMatrixRotationX(XMConvertToRadians(45.0f)), XMLoadFloat4x4(&viewMatrix)));
-	XMStoreFloat4x4(&viewMatrix, XMMatrixInverse(nullptr, XMLoadFloat4x4(&viewMatrix)));
+	XMStoreFloat4x4(&camera, tempMatrix);
+	camera._43 = -200.0f;
+	camera._42 = 100.0f;
+	//camera._43 = -20.0f;
+	//camera._42 = 10.0f;
+	//XMStoreFloat4x4(&camera, XMMatrixMultiply(XMMatrixRotationX(XMConvertToRadians(45.0f)), XMLoadFloat4x4(&camera)));
+	XMStoreFloat4x4(&viewMatrix, XMMatrixInverse(nullptr, XMLoadFloat4x4(&camera)));
 
 	D3D11_BUFFER_DESC worldConBuffDesc;
 	SecureZeroMemory(&worldConBuffDesc, sizeof(worldConBuffDesc));
@@ -86,7 +106,11 @@ void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int win
 	worldConBuffDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	worldConBuffDesc.ByteWidth = sizeof(XMFLOAT4X4);
 	device->CreateBuffer(&worldConBuffDesc, NULL, &worldCOnBuffer);
+	device->CreateBuffer(&worldConBuffDesc, NULL, &spotLightBuffer);
 
+	worldConBuffDesc.ByteWidth = sizeof(XMFLOAT4);
+	device->CreateBuffer(&worldConBuffDesc, NULL, &pointLightBuffer);
+	device->CreateBuffer(&worldConBuffDesc, NULL, &directionLightBuffer);
 	D3D11_INPUT_ELEMENT_DESC layoutDesc[] =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -96,7 +120,10 @@ void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int win
 
 	hResult = device->CreateInputLayout(layoutDesc, 3, VertexShader, sizeof(VertexShader), &vertexLayout);
 	hResult = device->CreatePixelShader(PixelShader, sizeof(PixelShader), NULL, &pixelShader);
+	hResult = device->CreatePixelShader(SpotLight, sizeof(SpotLight), NULL, &spotLightShader);
+	hResult = device->CreatePixelShader(PointLight, sizeof(PointLight), NULL, &pointLightShader);
 	hResult = device->CreateVertexShader(VertexShader, sizeof(VertexShader), NULL, &vertexShader);
+	hResult = device->CreatePixelShader(DirLight, sizeof(DirLight), NULL, &directionLightShader);
 
 	D3D11_SAMPLER_DESC sampleDesc;
 	SecureZeroMemory(&sampleDesc, sizeof(sampleDesc));
@@ -150,6 +177,92 @@ void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int win
 	};
 	device->CreateTexture2D(&depthTextureDesc, NULL, &depthStencilPointer);
 	hResult = device->CreateDepthStencilView(depthStencilPointer, NULL, &depthStencilViewport);
+
+	GetCursorPos(&prevMouseLoc);
+	lightDirection.x = 3.0f;
+	lightDirection.y = -2.0f;
+	lightDirection.z = 3.0f;
+	lightDirection.w = 0.0f;
+	XMStoreFloat4(&lightDirection, XMVector4Normalize(XMLoadFloat4(&lightDirection)));
+
+	for (size_t i = 0; i < Objects.size(); i++)
+	{
+		for (size_t j = 0; j < Objects[i].size(); j++)
+		{
+			vector<uniqueVertex> vertexes;
+			for (size_t k = 0; k < Objects[i][j].GetVertices().size(); k++)
+			{
+				uniqueVertex tempVertex;
+				tempVertex.position.x = Objects[i][j].GetVertices()[k].uVPos.x;
+				tempVertex.position.y = Objects[i][j].GetVertices()[k].uVPos.y;
+				tempVertex.position.z = Objects[i][j].GetVertices()[k].uVPos.z;
+				tempVertex.position.w = 1.0f;
+				tempVertex.normal.x = Objects[i][j].GetVertices()[k].uVNorm.x;
+				tempVertex.normal.y = Objects[i][j].GetVertices()[k].uVNorm.y;
+				tempVertex.normal.z = Objects[i][j].GetVertices()[k].uVNorm.z;
+				tempVertex.normal.w = 1;
+				tempVertex.texture.x = Objects[i][j].GetVertices()[k].textCoord.u;
+				tempVertex.texture.y = Objects[i][j].GetVertices()[k].textCoord.v;
+				vertexes.push_back(tempVertex);
+			}
+			RenderMesh *meshR = new RenderMesh;
+			meshR->stride = sizeof(uniqueVertex);
+			meshR->SetVertexBuffer(vertexes);
+			meshR->SetIndexBuffer(Objects[i][j].GetIndices());
+			meshR->func = RenderMeshes;
+			meshR->name = Objects[i][j].GetName();
+
+			RenderTexture *texterR = new RenderTexture;
+			texterR->func = RenderTextures;
+
+			XMFLOAT4X4 objectMatrix;
+			//XMMATRIX tempMatrix = XMMatrixIdentity();
+			XMMATRIX tempMatrix = XMMatrixRotationY(XMConvertToRadians(180));
+			XMStoreFloat4x4(&objectMatrix, tempMatrix);
+			//objectMatrix._41 = -150.0f;
+
+			meshR->next = head;
+			head = meshR;
+			meshR->child = texterR;
+			if (meshR->name == "Teddy_Idle.tribal")
+			{
+				DirectX::CreateDDSTextureFromFile(Renderer::device, L"Teddy_D.dds", NULL, &texterR->texture);
+			}
+			else if (meshR->name == "Box_BindPose.tribal" || meshR->name == "sphere.tribal")
+			{
+				DirectX::CreateDDSTextureFromFile(Renderer::device, L"TestCube.dds", NULL, &texterR->texture);
+			}
+			if (meshR->name == "Teddy_Idle.tribal" || meshR->name == "Box_BindPose.tribal")
+			{
+				RenderObject *objectR = new RenderObject;
+				objectR->func = RenderAndMovement;
+				objectR->numIndices = Objects[i][j].GetIndices().size();
+				texterR->child = objectR;
+				objectR->objectsWorld = objectMatrix;
+			}
+			else if (meshR->name == "sphere.tribal")
+			{
+				for (size_t o = 0; o < Objects.size(); o++)
+				{
+					if (Objects[o][0].GetName() == "Teddy_Idle.tribal" || Objects[o][0].GetName() == "Box_BindPose.tribal")
+					{
+						for (size_t a = 0; a < Objects[o][0].GetSkeleton().size(); a++)
+						{
+							RenderObject *objectR = new RenderObject;
+							objectR->func = DoNothing;
+							objectR->numIndices = Objects[i][j].GetIndices().size();
+							objectMatrix = Objects[o][0].GetSkeleton()[a].GlobalBind;
+							objectMatrix._42 *= -1;
+							objectR->objectsWorld = objectMatrix;
+							objectR->next = texterR->child;
+							texterR->child = objectR;
+						}
+						break;
+					}
+				}
+			}
+		}
+	}
 }
 
 
@@ -172,7 +285,38 @@ void Renderer::ClearScreenToColor(float * color)
 void Renderer::Render()
 {
 	deviceContext->VSSetShader(vertexShader, NULL, 0);
-	deviceContext->PSSetShader(pixelShader, NULL, 0);
+	switch (whichLight)
+	{
+	case 0:
+		deviceContext->PSSetShader(pixelShader, NULL, 0);
+		break;
+	case 1:
+		D3D11_MAPPED_SUBRESOURCE spotLightSubResource;
+		Renderer::deviceContext->Map(spotLightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &spotLightSubResource);
+		XMFLOAT4X4 *spotLightVram;
+		spotLightVram = (XMFLOAT4X4*)spotLightSubResource.pData;
+		*spotLightVram = camera;
+		Renderer::deviceContext->Unmap(spotLightBuffer, NULL);
+		deviceContext->PSSetShader(spotLightShader, NULL, 0);
+		deviceContext->PSSetConstantBuffers(0, 1, &spotLightBuffer);
+		break;
+	case 2:
+		deviceContext->PSSetShader(pointLightShader, NULL, 0);
+		deviceContext->PSSetConstantBuffers(0, 1, &pointLightBuffer);
+		break;
+	case 3:
+		D3D11_MAPPED_SUBRESOURCE dirLightResource;
+		Renderer::deviceContext->Map(directionLightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dirLightResource);
+		XMFLOAT4 *dirLightVram;
+		dirLightVram = (XMFLOAT4*)dirLightResource.pData;
+		*dirLightVram = lightDirection;
+		Renderer::deviceContext->Unmap(directionLightBuffer, NULL);
+		deviceContext->PSSetShader(directionLightShader, NULL, 0);
+		deviceContext->PSSetConstantBuffers(0, 1, &directionLightBuffer);
+		break;
+	default:
+		break;
+	}
 	deviceContext->PSSetSamplers(0, 1, &sampleState);
 	deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	deviceContext->RSSetState(rasterState);
@@ -240,4 +384,146 @@ void Renderer::ShutDown()
 	Release(sampleState);
 	Release(rasterState);
 	Release(blendState);
+	Release(spotLightBuffer);
+	Release(spotLightShader);
+	Release(pointLightBuffer);
+	Release(pointLightShader);
+	Release(directionLightBuffer);
+	Release(directionLightShader);
+}
+
+void Renderer::Update()
+{
+	XMFLOAT4X4 translate, rotationX, rotationY;
+	XMMATRIX tempMatrix = XMMatrixIdentity();
+	XMStoreFloat4x4(&translate, tempMatrix);
+	XMStoreFloat4x4(&rotationX, tempMatrix);
+	XMStoreFloat4x4(&rotationY, tempMatrix);
+
+	POINT currMousePos;
+	GetCursorPos(&currMousePos);
+	if (GetAsyncKeyState('W'))
+	{
+		translate._43 = MOVEMENTSPEED * delta;
+	}
+	if (GetAsyncKeyState('S'))
+	{
+		translate._43 = -MOVEMENTSPEED * delta;
+	}
+	if (GetAsyncKeyState('A'))
+	{
+		translate._41 = -MOVEMENTSPEED * delta;
+	}
+	if (GetAsyncKeyState('D'))
+	{
+		translate._41 = MOVEMENTSPEED * delta;
+	}
+	if (GetAsyncKeyState('Q'))
+	{
+		translate._42 = MOVEMENTSPEED * delta;
+	}
+	if (GetAsyncKeyState('E'))
+	{
+		translate._42 = -MOVEMENTSPEED * delta;
+	}
+	if (GetAsyncKeyState(VK_RBUTTON))
+	{
+		float diffX = (float)(prevMouseLoc.x - currMousePos.x)* delta;
+		float diffY = (float)(prevMouseLoc.y - currMousePos.y)* delta;
+
+		XMStoreFloat4x4(&rotationY, XMMatrixMultiply(XMLoadFloat4x4(&rotationY), XMMatrixRotationY(XMConvertToRadians(20 * diffX))));
+		XMStoreFloat4x4(&rotationX, XMMatrixMultiply(XMLoadFloat4x4(&rotationX), XMMatrixRotationX(XMConvertToRadians(20 * diffY))));
+	}
+
+	float x, y, z, w;
+	x = camera._41;
+	y = camera._42;
+	z = camera._43;
+	w = camera._44;
+	camera._41 = 0;
+	camera._42 = 0;
+	camera._43 = 0;
+	camera._44 = 0;
+	XMStoreFloat4x4(&camera, XMMatrixMultiply(XMLoadFloat4x4(&camera), XMLoadFloat4x4(&rotationY)));
+	XMStoreFloat4x4(&camera, XMMatrixMultiply(XMLoadFloat4x4(&rotationX), XMLoadFloat4x4(&camera)));
+	camera._41 = x;
+	camera._42 = y;
+	camera._43 = z;
+	camera._44 = w;
+	XMStoreFloat4x4(&camera, XMMatrixMultiply(XMLoadFloat4x4(&translate), XMLoadFloat4x4(&camera)));
+	XMStoreFloat4x4(&viewMatrix, XMMatrixInverse(nullptr, XMLoadFloat4x4(&camera)));
+	prevMouseLoc = currMousePos;
+
+	if (GetAsyncKeyState('1')) //Switches to no light
+	{
+		whichLight = 0;
+	}
+	if (GetAsyncKeyState('2')) //Switches to spotLight
+	{
+		whichLight = 1;
+	}
+	if (GetAsyncKeyState('3')) //Switches to pointLight
+	{
+		whichLight = 2;
+	}
+	if (GetAsyncKeyState('4')) //Switches to direction Light
+	{
+		whichLight = 3;
+	}
+	if (GetAsyncKeyState(VK_TAB) && !pressed) //increments lights
+	{
+		whichLight++;
+		whichLight %= 4;
+		pressed = true;
+	}
+	else if (!GetAsyncKeyState(VK_TAB) && pressed)
+	{
+		pressed = false;
+	}
+	if (GetAsyncKeyState('N'))
+	{
+		if (((RenderMesh*)head)->name == "Teddy_Idle.tribal" || ((RenderMesh*)head)->name == "Box_BindPose.tribal")
+		{
+			head->child->child->func = RenderStuff;
+			RenderNode *itr = head->next->child->child;
+			while (itr)
+			{
+				itr->func = DoNothing;
+				itr = itr->next;
+			}
+		}
+		else
+		{
+			head->next->child->child->func = RenderStuff;
+			RenderNode *itr = head->child->child;
+			while (itr)
+			{
+				itr->func = DoNothing;
+				itr = itr->next;
+			}
+		}
+	}
+	if (GetAsyncKeyState('J'))
+	{
+		if (((RenderMesh*)head)->name == "Teddy_Idle.tribal" || ((RenderMesh*)head)->name == "Box_BindPose.tribal")
+		{
+			head->child->child->func = DoNothing;
+			RenderNode *itr = head->next->child->child;
+			while (itr)
+			{
+				itr->func = RenderStuff;
+				itr = itr->next;
+			}
+		}
+		else
+		{
+			head->next->child->child->func = DoNothing;
+			RenderNode *itr = head->child->child;
+			while (itr)
+			{
+				itr->func = RenderStuff;
+				itr = itr->next;
+			}
+		}
+	}
 }

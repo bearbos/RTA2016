@@ -30,7 +30,7 @@ public:
 	CComPtr<ID3D11Buffer> meshVertexBuffer;
 	CComPtr<ID3D11Buffer> meshIndexBuffer;
 	unsigned int stride = 0, offset = 0;
-
+	string name;
 	void SetVertexBuffer(std::vector<uniqueVertex> _vertexes)
 	{
 		D3D11_BUFFER_DESC buffDesc;
