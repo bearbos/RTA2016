@@ -523,7 +523,6 @@ void FBXLoader::ProcessSkeletonHierarchyRecursively(FbxNode* _nodeIn, unsigned i
 		Joint currJoint;
 		currJoint.parentIndex = _parentIndexIn;
 		temp = _nodeIn->GetName();
-		//temp.replace(temp.begin(), temp.end(), '\_', ' ');
 		strcpy_s(currJoint.name, temp.c_str());
 		skeletonPTR->push_back(currJoint);
 	}

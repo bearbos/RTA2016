@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Animation.h"
-
+#include "Defines.h"
 class Interpolator
 {
 public:
@@ -22,7 +22,7 @@ private:
 
 	Animation* anim;
 	unsigned int currFrame;
-	vector<Joint> world;
+	std::vector<Joint> world;
 
 };
 
@@ -105,9 +105,9 @@ void   Interpolator::Update(float _time)
 	}
 	
 		world.resize(anim->GetNumJoints());
-	for (unsigned int i = 0; i < anim->GetNumJoints(); i++)
+	for (int i = 0; i < anim->GetNumJoints(); i++)
 	{
-		world[i].World =  matrixAddition(ratioMult(anim->keyFrames[currFrame].world->World, 1 - ratio), ratioMult(anim->keyFrames[currFrame + 1].world->World, ratio));
+		world[i].World =  matrixAddition(ratioMult(anim->keyFrames[currFrame].world[i], 1 - ratio), ratioMult(anim->keyFrames[currFrame + 1].world[i], ratio));
 	}
 }
 

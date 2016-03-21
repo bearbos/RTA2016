@@ -1,5 +1,5 @@
 #pragma once
-
+#include "Defines.h"
 class KeyFrame
 {
 private:
@@ -8,6 +8,6 @@ public:
 
 	int numBones;
 	float time;
-	Joint world[50];
+	XMFLOAT4X4 world[50];
 
 };

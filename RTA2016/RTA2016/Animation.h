@@ -9,13 +9,13 @@ public:
 	Animation(int numKeyFrames, float totalTime);
 	~Animation();
 
-	const Joint* GetFrames(int _index);
+	const XMFLOAT4X4* GetFrames(int _index);
 	int GetNumJoints();
 	void Init(int _num, float _time);
 	const float GetTotalTime();
 	int GetNumKeyFrames();
 
-	KeyFrame* keyFrames;
+	std::vector<KeyFrame> keyFrames;
 	float AnimStartTime;
 	bool completed = true;
 
@@ -33,15 +33,14 @@ Animation::Animation(int _numKeyFrames, float _totalTime)
 {
 	numKeyFrames = _numKeyFrames;
 	totalTime = _totalTime;
-	keyFrames = new KeyFrame[numKeyFrames];
 }
 
 Animation::~Animation()
 {
-	delete[] keyFrames;
+
 }
 
-const Joint* Animation::GetFrames(int _index)
+const XMFLOAT4X4* Animation::GetFrames(int _index)
 {
 	return keyFrames[_index].world;
 }
@@ -55,7 +54,6 @@ void Animation::Init(int _num, float _time)
 {
 	numKeyFrames = _num;
 	totalTime = _time;
-	keyFrames = new KeyFrame[numKeyFrames];
 }
 
 const float Animation::GetTotalTime()

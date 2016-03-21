@@ -6,7 +6,9 @@
 #include "PointLight.csh"
 #include "DirLight.csh"
 #include "RenderFunctions.h"
-
+#include "Interpolator.h"
+#include "Animation.h"
+#include "keyFrame.h"
 #define Release(x) { if(x) {x->Release(); x =0;} }
 ID3D11Device *Renderer::device = 0; //Released
 IDXGISwapChain *Renderer::swapChain = 0; //Released
@@ -42,7 +44,9 @@ XMFLOAT4 Renderer::lightDirection;
 bool Renderer::pressed = false;
 std::vector<std::vector<Mesh>> Renderer::Objects;
 Interpolator Renderer::interp;
-
+Animation Renderer::animations;
+bool Renderer::animationBool;
+float Renderer::animationTimer;
 void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int windWidth)
 {
 	DXGI_SWAP_CHAIN_DESC chainDesc;
@@ -186,7 +190,6 @@ void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int win
 	lightDirection.z = 3.0f;
 	lightDirection.w = 0.0f;
 	XMStoreFloat4(&lightDirection, XMVector4Normalize(XMLoadFloat4(&lightDirection)));
-
 	for (size_t i = 0; i < Objects.size(); i++)
 	{
 		for (size_t j = 0; j < Objects[i].size(); j++)
@@ -265,6 +268,35 @@ void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int win
 			}
 		}
 	}
+	std::vector<KeyFrame> tempFrames;
+	for (unsigned int objectIndex = 0; objectIndex < Objects.size(); objectIndex++)
+	{
+		for (unsigned int objectMeshIndex = 0; objectMeshIndex < Objects[objectIndex].size(); objectMeshIndex++)
+		{
+			if (Objects[objectIndex][objectMeshIndex].GetName() == "Teddy_Idle.tribal" || Objects[objectIndex][objectMeshIndex].GetName() == "Box_BindPose.tribal")
+			{
+				for (unsigned int numKeyFrames = 0; numKeyFrames < Objects[objectIndex][objectMeshIndex].GetSkeleton()[0].frames.size(); numKeyFrames++)
+				{
+					KeyFrame tempFrame;
+					tempFrame.numBones = (int)Objects[objectIndex][objectMeshIndex].GetSkeleton()[0].frames.size();
+					for (unsigned int jointIndex = 0; jointIndex < Objects[objectIndex][objectMeshIndex].GetSkeleton().size(); jointIndex++)
+					{
+						if (Objects[objectIndex][objectMeshIndex].GetSkeleton()[jointIndex].frames.size() > 0)
+						{
+							tempFrame.world[jointIndex] = Objects[objectIndex][objectMeshIndex].GetSkeleton()[jointIndex].frames[numKeyFrames].local;
+							tempFrame.time = Objects[objectIndex][objectMeshIndex].GetSkeleton()[0].frames[numKeyFrames].time;
+						}
+					}
+					tempFrames.push_back(tempFrame);
+				}
+			}
+		}
+	}
+	animations.Init(tempFrames.size(), tempFrames[tempFrames.size() - 1].time);
+	animations.completed = false;
+	animations.keyFrames = tempFrames;
+	animationBool = true;
+	animationTimer = 0.0f;
 }
 
 
@@ -396,6 +428,7 @@ void Renderer::ShutDown()
 
 void Renderer::Update()
 {
+
 	XMFLOAT4X4 translate, rotationX, rotationY;
 	XMMATRIX tempMatrix = XMMatrixIdentity();
 	XMStoreFloat4x4(&translate, tempMatrix);
@@ -530,6 +563,10 @@ void Renderer::Update()
 			}
 		}
 	}
-
-	
+	if (animationBool)
+	{
+		animationTimer += delta;
+		interp.SetAnimation(&animations);
+		interp.Update(animationTimer);
+	}
 }

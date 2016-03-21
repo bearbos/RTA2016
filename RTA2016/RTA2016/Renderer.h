@@ -1,17 +1,21 @@
 #pragma once
-#include "Interpolator.h"
+
 
 class RenderSet;
 class RenderNode;
 class XTime;
 class Timer;
 class Mesh;
+class Interpolator;
+class Animation;
 class Renderer
 {
 	static XMFLOAT4X4 camera;
 	static POINT prevMouseLoc;
 	static int whichLight;
 	static bool pressed;
+	static bool animationBool;
+	static float animationTimer;
 public:
 	static Timer clock;
 	static float delta;
@@ -42,6 +46,8 @@ public:
 	static XMFLOAT4X4 projMatrix;
 	static XMFLOAT4 lightDirection;
 	static std::vector<std::vector<Mesh>> Objects;
+	static Interpolator interp;
+	static Animation animations;
 	Renderer();
 	~Renderer();
 	static void Initialize(HWND window, unsigned int windHeight, unsigned int windWidth);
@@ -49,6 +55,5 @@ public:
 	static void Render();
 	static void ShutDown();
 	static void Update();
-	static Interpolator interp;
 };
 
