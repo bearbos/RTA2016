@@ -74,9 +74,9 @@ void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int win
 	projMatrix._34 = 1;
 	tempMatrix = XMMatrixIdentity();
 	XMStoreFloat4x4(&viewMatrix, tempMatrix);
-	viewMatrix._43 = -10.0f;
-	viewMatrix._42 = 10.0f;
-	XMStoreFloat4x4(&viewMatrix, XMMatrixMultiply(XMMatrixRotationX(XMConvertToRadians(45.0f)), XMLoadFloat4x4(&viewMatrix)));
+	viewMatrix._43 = -200.0f;
+	viewMatrix._42 = 100.0f;
+	//XMStoreFloat4x4(&viewMatrix, XMMatrixMultiply(XMMatrixRotationX(XMConvertToRadians(45.0f)), XMLoadFloat4x4(&viewMatrix)));
 	XMStoreFloat4x4(&viewMatrix, XMMatrixInverse(nullptr, XMLoadFloat4x4(&viewMatrix)));
 
 	D3D11_BUFFER_DESC worldConBuffDesc;
