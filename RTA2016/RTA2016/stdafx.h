@@ -49,4 +49,4 @@ using namespace DirectX;
 #include "XTime.h"
 #include "Timer.h"
 
-#define MOVEMENTSPEED 5
+#define MOVEMENTSPEED 30

@@ -8,7 +8,7 @@ public:
 	Interpolator();
 	~Interpolator();
 
-	Joint& GetCurrentWorld(int Num);
+	XMFLOAT4X4* GetCurrentWorld();
 	float GetTime();
 	float GetElapsedTime();
 	void SetAnimation(Animation* _anim);
@@ -17,12 +17,12 @@ public:
 	void Update(float _time);
 	XMFLOAT4X4 ratioMult(XMFLOAT4X4 _mat, float _float);
 	XMFLOAT4X4 matrixAddition(XMFLOAT4X4 _mat1, XMFLOAT4X4 _mat2);
+	XMFLOAT4X4 world[50];
 
 private:
 
 	Animation* anim;
 	unsigned int currFrame;
-	std::vector<Joint> world;
 
 };
 
@@ -34,9 +34,9 @@ Interpolator::~Interpolator()
 {
 }
 
-Joint& Interpolator::GetCurrentWorld(int Num)
+XMFLOAT4X4* Interpolator::GetCurrentWorld()
 {
-	return world[0];
+	return world;
 }
 
 float Interpolator::GetTime()
@@ -82,32 +82,28 @@ void   Interpolator::Update(float _time)
 	{
 		return;
 	}
-
+	if (_time > anim->GetTotalTime())
+	{
+		anim->completed = true;
+		return;
+	}
 	for (int i = 0; i < anim->GetNumKeyFrames(); i++)
 	{
-		if (_time > anim->GetTotalTime())
+		if (i == anim->GetNumKeyFrames() - 1)
 		{
-			anim->completed = true;
-			return;
-		}
-		else if (i == anim->GetNumKeyFrames() - 1)
-		{
-			//lastFrame = true;
 			currFrame = i;
 			ratio = _time - anim->keyFrames[i].time / anim->GetTotalTime() - anim->keyFrames[i].time;
 		}
-		else if (_time > anim->keyFrames[i].time && _time < anim->keyFrames[i+1].time)
+		else if (_time >= anim->keyFrames[i].time && _time < anim->keyFrames[i+1].time)
 		{
 			currFrame = i;
 			ratio = _time - anim->keyFrames[i].time / anim->keyFrames[i + 1].time - anim->keyFrames[i].time;
 			break;
 		}
 	}
-	
-		world.resize(anim->GetNumJoints());
 	for (int i = 0; i < anim->GetNumJoints(); i++)
 	{
-		world[i].World =  matrixAddition(ratioMult(anim->keyFrames[currFrame].world[i], 1 - ratio), ratioMult(anim->keyFrames[currFrame + 1].world[i], ratio));
+		world[i] =  matrixAddition(ratioMult(anim->keyFrames[currFrame].world[i], 1 - ratio), ratioMult(anim->keyFrames[currFrame + 1].world[i], ratio));
 	}
 }
 

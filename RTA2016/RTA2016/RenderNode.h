@@ -29,6 +29,7 @@ class RenderMesh : public RenderNode
 public:
 	CComPtr<ID3D11Buffer> meshVertexBuffer;
 	CComPtr<ID3D11Buffer> meshIndexBuffer;
+	CComPtr<ID3D11VertexShader> vertShader;
 	unsigned int stride = 0, offset = 0;
 	string name;
 	void SetVertexBuffer(std::vector<uniqueVertex> _vertexes)

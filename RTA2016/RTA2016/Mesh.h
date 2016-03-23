@@ -29,12 +29,12 @@ public:
 		{
 			return uVPos.x == v.uVPos.x &&
 				uVPos.y == v.uVPos.y &&
-				uVPos.z == v.uVPos.z &&
+				uVPos.z == v.uVPos.z /*&&
 				uVNorm.x == v.uVNorm.x &&
 				uVNorm.y == v.uVNorm.y &&
 				uVNorm.z == v.uVNorm.z &&
 				textCoord.u == v.textCoord.u &&
-				textCoord.v == v.textCoord.v;
+				textCoord.v == v.textCoord.v*/;
 		}
 	};
 

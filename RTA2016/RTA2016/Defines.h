@@ -13,6 +13,8 @@ struct uniqueVertex
 {
 	XMFLOAT4 position;
 	XMFLOAT4 normal;
+	unsigned int indexs[4];
+	float weights[4];
 	XMFLOAT2 texture;
 };
 struct Vertex
@@ -39,6 +41,10 @@ struct Joint
 	unsigned int parentIndex;
 	char name[128];
 	bool bDirty;
-	BlendingIndexWeightPair SkinWeight;
+	std::vector<BlendingIndexWeightPair> SkinWeight;
 	std::vector<JointKeys> frames;
+};
+struct ArrayOfMatrixes
+{
+	XMFLOAT4X4 matrix[50];
 };

@@ -9,6 +9,7 @@
 #include "Interpolator.h"
 #include "Animation.h"
 #include "keyFrame.h"
+#include "AnimationShader.csh"
 #define Release(x) { if(x) {x->Release(); x =0;} }
 ID3D11Device *Renderer::device = 0; //Released
 IDXGISwapChain *Renderer::swapChain = 0; //Released
@@ -23,7 +24,6 @@ ID3D11Buffer *Renderer::viewProjConBuffer = 0; //Released
 ID3D11Buffer *Renderer::worldCOnBuffer = 0; //Released
 ID3D11Buffer *Renderer::spotLightBuffer = 0; //Released
 ID3D11InputLayout *Renderer::vertexLayout = 0; //Released
-ID3D11VertexShader *Renderer::vertexShader = 0; //Released
 ID3D11PixelShader *Renderer::pixelShader = 0; //Released
 ID3D11PixelShader *Renderer::spotLightShader = 0; //Released
 ID3D11SamplerState *Renderer::sampleState = 0; //Released
@@ -40,15 +40,18 @@ ID3D11Buffer *Renderer::pointLightBuffer = 0; //Released
 ID3D11PixelShader *Renderer::pointLightShader = 0; //Released
 ID3D11PixelShader *Renderer::directionLightShader = 0; //Released
 ID3D11Buffer *Renderer::directionLightBuffer = 0; //Released
-XMFLOAT4 Renderer::lightDirection;
-bool Renderer::pressed = false;
-std::vector<std::vector<Mesh>> Renderer::Objects;
-Interpolator Renderer::interp;
-Animation Renderer::animations;
-bool Renderer::animationBool;
-float Renderer::animationTimer;
+XMFLOAT4 Renderer::lightDirection; //Doesn't need to be Released
+bool Renderer::pressed = false; //Doesn't need to be Released
+std::vector<std::vector<Mesh>> Renderer::Objects; //Doesn't need to be Released
+Interpolator Renderer::interp; //Doesn't need to be Released
+Animation Renderer::animations; //Doesn't need to be Released
+bool Renderer::animationBool; //Doesn't need to be Released
+float Renderer::animationTimer; //Doesn't need to be Released
+ID3D11Buffer *Renderer::animationConBuffer; //Released
+unsigned int Renderer::keyFrameIndex;
 void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int windWidth)
 {
+	keyFrameIndex = 0;
 	DXGI_SWAP_CHAIN_DESC chainDesc;
 	SecureZeroMemory(&chainDesc, sizeof(chainDesc));
 	chainDesc.BufferDesc.Height = windHeight;
@@ -98,11 +101,11 @@ void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int win
 	projMatrix._34 = 1;
 	tempMatrix = XMMatrixIdentity();
 	XMStoreFloat4x4(&camera, tempMatrix);
-	camera._43 = -200.0f;
+	camera._43 = 200.0f;
 	camera._42 = 100.0f;
 	//camera._43 = -20.0f;
 	//camera._42 = 10.0f;
-	//XMStoreFloat4x4(&camera, XMMatrixMultiply(XMMatrixRotationX(XMConvertToRadians(45.0f)), XMLoadFloat4x4(&camera)));
+	XMStoreFloat4x4(&camera, XMMatrixMultiply(XMMatrixRotationY(XMConvertToRadians(180.0f)), XMLoadFloat4x4(&camera)));
 	XMStoreFloat4x4(&viewMatrix, XMMatrixInverse(nullptr, XMLoadFloat4x4(&camera)));
 
 	D3D11_BUFFER_DESC worldConBuffDesc;
@@ -117,18 +120,21 @@ void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int win
 	worldConBuffDesc.ByteWidth = sizeof(XMFLOAT4);
 	device->CreateBuffer(&worldConBuffDesc, NULL, &pointLightBuffer);
 	device->CreateBuffer(&worldConBuffDesc, NULL, &directionLightBuffer);
+	worldConBuffDesc.ByteWidth = sizeof(ArrayOfMatrixes);
+	device->CreateBuffer(&worldConBuffDesc, NULL, &animationConBuffer);
 	D3D11_INPUT_ELEMENT_DESC layoutDesc[] =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "NORMALS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "INDICES", 0, DXGI_FORMAT_R32G32B32A32_UINT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "WEIGHTS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "UV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 
-	hResult = device->CreateInputLayout(layoutDesc, 3, VertexShader, sizeof(VertexShader), &vertexLayout);
+	hResult = device->CreateInputLayout(layoutDesc, 5, VertexShader, sizeof(VertexShader), &vertexLayout);
 	hResult = device->CreatePixelShader(PixelShader, sizeof(PixelShader), NULL, &pixelShader);
 	hResult = device->CreatePixelShader(SpotLight, sizeof(SpotLight), NULL, &spotLightShader);
 	hResult = device->CreatePixelShader(PointLight, sizeof(PointLight), NULL, &pointLightShader);
-	hResult = device->CreateVertexShader(VertexShader, sizeof(VertexShader), NULL, &vertexShader);
 	hResult = device->CreatePixelShader(DirLight, sizeof(DirLight), NULL, &directionLightShader);
 
 	D3D11_SAMPLER_DESC sampleDesc;
@@ -210,19 +216,52 @@ void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int win
 				tempVertex.texture.y = Objects[i][j].GetVertices()[k].textCoord.v;
 				vertexes.push_back(tempVertex);
 			}
+			for (unsigned int m = 0; m < vertexes.size(); m++)
+			{
+				std::vector<float> tempWeight;
+				std::vector<unsigned int> tempIndexs;
+				for (unsigned int k = 0; k < Objects[i][j].GetSkeleton().size(); k++)
+				{
+					for (unsigned int l = 0; l < Objects[i][j].GetSkeleton()[k].SkinWeight.size(); l++)
+					{
+						if (m == (unsigned int)Objects[i][j].GetSkeleton()[k].SkinWeight[l].BlendingIndex)
+						{
+							tempWeight.push_back(Objects[i][j].GetSkeleton()[k].SkinWeight[l].BlendingWeight);
+							tempIndexs.push_back(k);
+						}
+					}
+				}
+				for (unsigned int k = 0; k < 4; k++)
+				{
+					if (tempIndexs.size() > k)
+					{
+						vertexes[m].indexs[k] = tempIndexs[k];
+						vertexes[m].weights[k] = tempWeight[k];
+					}
+					else
+					{
+						vertexes[m].indexs[k] = 0;
+						vertexes[m].weights[k] = 0;
+					}
+				}
+				vertexes[m].weights[3] = 1.0f - vertexes[m].weights[0] - vertexes[m].weights[1] - vertexes[m].weights[2];
+			}
 			RenderMesh *meshR = new RenderMesh;
 			meshR->stride = sizeof(uniqueVertex);
 			meshR->SetVertexBuffer(vertexes);
 			meshR->SetIndexBuffer(Objects[i][j].GetIndices());
 			meshR->func = RenderMeshes;
 			meshR->name = Objects[i][j].GetName();
-
+			if ((meshR->name == "Box_BindPose.tribal" || meshR->name == "Teddy_Idle.tribal"))
+				device->CreateVertexShader(AnimationShader, sizeof(AnimationShader), NULL, &meshR->vertShader.p);
+			else
+				device->CreateVertexShader(VertexShader, sizeof(VertexShader), NULL, &meshR->vertShader.p);
 			RenderTexture *texterR = new RenderTexture;
 			texterR->func = RenderTextures;
 
 			XMFLOAT4X4 objectMatrix;
-			//XMMATRIX tempMatrix = XMMatrixIdentity();
-			XMMATRIX tempMatrix = XMMatrixRotationY(XMConvertToRadians(180));
+			XMMATRIX tempMatrix = XMMatrixIdentity();
+			//XMMATRIX tempMatrix = XMMatrixRotationY(XMConvertToRadians(180));
 			XMStoreFloat4x4(&objectMatrix, tempMatrix);
 			//objectMatrix._41 = -150.0f;
 
@@ -285,6 +324,7 @@ void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int win
 						{
 							tempFrame.world[jointIndex] = Objects[objectIndex][objectMeshIndex].GetSkeleton()[jointIndex].frames[numKeyFrames].local;
 							tempFrame.time = Objects[objectIndex][objectMeshIndex].GetSkeleton()[0].frames[numKeyFrames].time;
+							tempFrame.numBones = 37;
 						}
 					}
 					tempFrames.push_back(tempFrame);
@@ -318,7 +358,23 @@ void Renderer::ClearScreenToColor(float * color)
 }
 void Renderer::Render()
 {
-	deviceContext->VSSetShader(vertexShader, NULL, 0);
+	//if (((RenderMesh*)head)->name == "sphere.tribal")
+	//{
+	//	auto itr = head->child->child;
+	//	for (unsigned int i = 0; itr; i++, itr = itr->next)
+	//	{
+	//		if (!(i == 6 || i == 21 || i == 31 || i == 36))
+	//			((RenderObject*)itr)->objectsWorld = animations.keyFrames[keyFrameIndex].world[i];
+	//	}
+	//}
+	//else
+	//{
+	//	auto itr = head->next->child->child;
+	//	for (unsigned int i = 0; itr; i++, itr = itr->next)
+	//	{
+	//		((RenderObject*)itr)->objectsWorld = animations.keyFrames[keyFrameIndex].world[i];
+	//	}
+	//}
 	switch (whichLight)
 	{
 	case 0:
@@ -413,7 +469,6 @@ void Renderer::ShutDown()
 	Release(viewProjConBuffer);
 	Release(worldCOnBuffer);
 	Release(vertexLayout);
-	Release(vertexShader);
 	Release(pixelShader);
 	Release(sampleState);
 	Release(rasterState);
@@ -424,6 +479,7 @@ void Renderer::ShutDown()
 	Release(pointLightShader);
 	Release(directionLightBuffer);
 	Release(directionLightShader);
+	Release(animationConBuffer);
 }
 
 void Renderer::Update()
@@ -435,7 +491,7 @@ void Renderer::Update()
 	XMStoreFloat4x4(&rotationX, tempMatrix);
 	XMStoreFloat4x4(&rotationY, tempMatrix);
 
-	
+
 
 	POINT currMousePos;
 	GetCursorPos(&currMousePos);
@@ -509,8 +565,10 @@ void Renderer::Update()
 	}
 	if (GetAsyncKeyState(VK_TAB) && !pressed) //increments lights
 	{
-		whichLight++;
-		whichLight %= 4;
+		keyFrameIndex++;
+		keyFrameIndex %= 60;
+		//whichLight++;
+		//whichLight %= 4;
 		pressed = true;
 	}
 	else if (!GetAsyncKeyState(VK_TAB) && pressed)
@@ -566,7 +624,40 @@ void Renderer::Update()
 	if (animationBool)
 	{
 		animationTimer += delta;
+		if (animationTimer > animations.GetTotalTime())
+			animationTimer = 0.05f;
 		interp.SetAnimation(&animations);
 		interp.Update(animationTimer);
+		D3D11_MAPPED_SUBRESOURCE animBufferResource;
+		Renderer::deviceContext->Map(animationConBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &animBufferResource);
+		ArrayOfMatrixes *animeVram;
+		animeVram = (ArrayOfMatrixes*)animBufferResource.pData;
+		for (unsigned int i = 0; i < Objects[0][0].GetSkeleton().size(); i++)
+		{
+			XMFLOAT4X4 temp;
+			XMStoreFloat4x4(&temp, XMMatrixMultiply(XMLoadFloat4x4(&Objects[0][0].GetSkeleton()[i].GlobalBind), XMLoadFloat4x4(&interp.world[i])));
+			//animeVram->matrix[i] = interp.world[i];
+			animeVram->matrix[i] = temp;
+		}
+		Renderer::deviceContext->Unmap(animationConBuffer, NULL);
+		deviceContext->VSSetConstantBuffers(2, 1, &animationConBuffer);
+		if (((RenderMesh*)head)->name == "sphere.tribal")
+		{
+			auto itr = head->child->child;
+			for (unsigned int i = 0; itr; i++, itr = itr->next)
+			{
+				if (!(i == 6 || i == 21 || i == 31 || i == 36))
+					((RenderObject*)itr)->objectsWorld = interp.world[i];
+			}
+		}
+		else
+		{
+			auto itr = head->next->child->child;
+			for (unsigned int i = 0; itr; i++, itr = itr->next)
+			{
+				if (!(i == 6 || i == 21 || i == 31 || i == 36))
+					((RenderObject*)itr)->objectsWorld = interp.world[i];
+			}
+		}
 	}
 }

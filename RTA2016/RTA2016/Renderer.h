@@ -16,6 +16,7 @@ class Renderer
 	static bool pressed;
 	static bool animationBool;
 	static float animationTimer;
+	static unsigned int keyFrameIndex;
 public:
 	static Timer clock;
 	static float delta;
@@ -31,7 +32,6 @@ public:
 	static ID3D11Buffer *pointLightBuffer;
 	static ID3D11Buffer *directionLightBuffer;
 	static ID3D11InputLayout *vertexLayout;
-	static ID3D11VertexShader *vertexShader;
 	static ID3D11PixelShader *pixelShader;
 	static ID3D11PixelShader *spotLightShader;
 	static ID3D11PixelShader *pointLightShader;
@@ -48,6 +48,7 @@ public:
 	static std::vector<std::vector<Mesh>> Objects;
 	static Interpolator interp;
 	static Animation animations;
+	static ID3D11Buffer *animationConBuffer;
 	Renderer();
 	~Renderer();
 	static void Initialize(HWND window, unsigned int windHeight, unsigned int windWidth);

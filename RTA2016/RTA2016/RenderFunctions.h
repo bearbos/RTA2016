@@ -34,6 +34,7 @@ void RenderTextures(RenderNode &_node)
 void RenderMeshes(RenderNode &_node)
 {
 	RenderMesh &meshNode = (RenderMesh&)_node;
+	Renderer::deviceContext->VSSetShader(meshNode.vertShader.p, NULL, 0);
 	Renderer::deviceContext->IASetVertexBuffers(0, 1, &meshNode.meshVertexBuffer.p, &meshNode.stride, &meshNode.offset);
 	Renderer::deviceContext->IASetIndexBuffer(meshNode.meshIndexBuffer.p, DXGI_FORMAT_R32_UINT, 0);
 	RenderNode *itr = meshNode.child;

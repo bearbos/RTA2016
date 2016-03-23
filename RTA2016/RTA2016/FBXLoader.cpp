@@ -269,7 +269,12 @@ void FBXLoader::FBXBinaryConvert(const char * _fileName, const char * _binName)
 				bout.write((char*)&tempJoints[j].bDirty, sizeof(bool));
 				bout.write((char*)&tempJoints[j].name, sizeof(char) * 128);
 				bout.write((char*)&tempJoints[j].parentIndex, sizeof(unsigned int));
-				bout.write((char*)&tempJoints[j].SkinWeight, sizeof(BlendingIndexWeightPair));
+				unsigned int numWeigths = tempJoints[j].SkinWeight.size();
+				bout.write((char*)&numWeigths, sizeof(unsigned int));
+				for (unsigned int k = 0; k < numWeigths; k++)
+				{
+					bout.write((char*)&tempJoints[j].SkinWeight[k], sizeof(BlendingIndexWeightPair));
+				}
 				unsigned int numFrames = tempJoints[j].frames.size();
 				bout.write((char*)&numFrames, sizeof(unsigned int));
 				for (unsigned int  k = 0; k < numFrames; k++)
@@ -485,7 +490,13 @@ void FBXLoader::LoadBinary(const char * _binName)
 				bin.read((char*)&tempSkele[j].bDirty, sizeof(bool));
 				bin.read((char*)&tempSkele[j].name, sizeof(char) * 128);
 				bin.read((char*)&tempSkele[j].parentIndex, sizeof(unsigned int));
-				bin.read((char*)&tempSkele[j].SkinWeight, sizeof(BlendingIndexWeightPair));
+				unsigned int numWeigths = 0;
+				bin.read((char*)&numWeigths, sizeof(unsigned int));
+				tempSkele[j].SkinWeight.resize(numWeigths);
+				for (unsigned int k = 0; k < numWeigths; k++)
+				{
+					bin.read((char*)&tempSkele[j].SkinWeight[k], sizeof(BlendingIndexWeightPair));
+				}
 				unsigned int numFrames;
 				bin.read((char*)&numFrames, sizeof(unsigned int));
 				tempSkele[j].frames.resize(numFrames);
@@ -568,9 +579,9 @@ void FBXLoader::ProcessJointsAndAnimations(FbxMesh* _nodeIn)
 			for (unsigned int indeciesIndex = 0; indeciesIndex < numIndecies; ++indeciesIndex)
 			{
 				BlendingIndexWeightPair currentBlendingPair;
-				currentBlendingPair.BlendingIndex = (float)currentJointIndex;
+				currentBlendingPair.BlendingIndex = (float)currentCluster->GetControlPointIndices()[indeciesIndex];
 				currentBlendingPair.BlendingWeight = (float)currentCluster->GetControlPointWeights()[indeciesIndex];
-				skeletonPTR->operator[](currentJointIndex).SkinWeight = currentBlendingPair;
+				skeletonPTR->operator[](currentJointIndex).SkinWeight.push_back(currentBlendingPair);
 			}
 			FbxAnimStack* animStack = scene->GetSrcObject<FbxAnimStack>();
 			if (!animStack)
@@ -586,7 +597,7 @@ void FBXLoader::ProcessJointsAndAnimations(FbxMesh* _nodeIn)
 				time.SetFrame(keyFrameIndex, FbxTime::eFrames24);
 				JointKeys tempFrame;
 				tempFrame.time = (float)time.GetSecondDouble();
-				tempFrame.local = fbxToFloatMatrix(currentCluster->GetLink()->EvaluateGlobalTransform(time).Inverse());
+				tempFrame.local = fbxToFloatMatrix(currentCluster->GetLink()->EvaluateGlobalTransform(time));
 				skeletonPTR->operator[](currentJointIndex).frames.push_back(tempFrame);
 			}
 		}
