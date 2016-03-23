@@ -191,6 +191,7 @@ void FBXLoader::FBXBinaryConvert(const char * _fileName, const char * _binName)
 		{
 			return;
 		}
+		mesh.GetControlPointIndices() = controlPointIndices;
 		skeletonPTR = &mesh.GetSkeleton();
 		skeletonNodes.clear();
 		ProcessSkeletonHierarchy(rootNode);
@@ -239,6 +240,7 @@ void FBXLoader::FBXBinaryConvert(const char * _fileName, const char * _binName)
 			unsigned int indiciesSize = meshes[i].GetIndices().size();
 			unsigned int textNamesSize = meshes[i].GetTextureNames().size();
 			unsigned int jointsSize = meshes[i].GetSkeleton().size();
+			unsigned int controlPointIndicesSize = meshes[i].GetControlPointIndices().size();
 			//unsigned int textsSize = meshes[i].GetTextures().size();
 			string name = meshes[i].GetName();
 
@@ -247,6 +249,7 @@ void FBXLoader::FBXBinaryConvert(const char * _fileName, const char * _binName)
 			bout.write((char*)&indiciesSize, sizeof(unsigned int));
 			bout.write((char*)&textNamesSize, sizeof(unsigned int));
 			bout.write((char*)&jointsSize, sizeof(unsigned int));
+			bout.write((char*)&controlPointIndicesSize, sizeof(unsigned int));
 
 			vector<Mesh::UniqueMeshVertex> tempVerts = meshes[i].GetVertices();
 			vector<Joint> tempJoints = meshes[i].GetSkeleton();
@@ -260,6 +263,10 @@ void FBXLoader::FBXBinaryConvert(const char * _fileName, const char * _binName)
 			for (unsigned int j = 0; j < indiciesSize; ++j)
 			{
 				bout.write((char*)&tempInd[j], sizeof(unsigned int));
+			}
+			for (unsigned int j = 0; j < controlPointIndicesSize; j++)
+			{
+				bout.write((char*)&meshes[i].GetControlPointIndices()[j], sizeof(unsigned int));
 			}
 			for (unsigned int j = 0; j < jointsSize; j++)
 			{
@@ -453,13 +460,14 @@ void FBXLoader::LoadBinary(const char * _binName)
 			unsigned int indiciesSize;
 			unsigned int textNamesSize;
 			unsigned int jointsSize;
+			unsigned int controlPointSize;
 
 			bin.read((char*)&name, 128);
 			bin.read((char*)&uniqueSize, sizeof(unsigned int));
 			bin.read((char*)&indiciesSize, sizeof(unsigned int));
 			bin.read((char*)&textNamesSize, sizeof(unsigned int));
 			bin.read((char*)&jointsSize, sizeof(unsigned int));
-
+			bin.read((char*)&controlPointSize, sizeof(unsigned int));
 			Mesh tempMesh;
 			tempMesh.GetName() = _binName;
 
@@ -478,10 +486,14 @@ void FBXLoader::LoadBinary(const char * _binName)
 			{
 				bin.read((char*)&tempInd[j], sizeof(unsigned int));
 			}
-
+			std::vector<unsigned int> tempContolPointsIndices;
+			tempContolPointsIndices.resize(controlPointSize);
+			for (unsigned int j = 0; j < controlPointSize; j++)
+			{
+				bin.read((char*)&tempContolPointsIndices[j], sizeof(unsigned int));
+			}
 			vector<Joint> tempSkele;
 			tempSkele.resize(jointsSize);
-
 			for (unsigned int j = 0; j < jointsSize; j++)
 			{
 				bin.read((char*)&tempSkele[j].World, sizeof(XMFLOAT4X4));
@@ -508,7 +520,7 @@ void FBXLoader::LoadBinary(const char * _binName)
 			tempMesh.GetVertices() = tempVerts;
 			tempMesh.GetIndices() = tempInd;
 			tempMesh.GetSkeleton() = tempSkele;
-
+			tempMesh.GetControlPointIndices() = tempContolPointsIndices;
 			meshes.push_back(tempMesh);
 		}
 		bin.close();

@@ -96,3 +96,8 @@ const std::vector<Joint>& Mesh::GetSkeleton() const
 {
 	return skeleton;
 }
+
+std::vector< unsigned int >& Mesh::GetControlPointIndices()
+{
+	return controlPointIndices;
+}

@@ -65,6 +65,7 @@ public:
 	std::vector<Joint>& GetSkeleton();
 	const std::vector<Joint>& GetSkeleton() const;
 
+	std::vector< unsigned int >& GetControlPointIndices();
 
 private:
 	std::string name;
@@ -81,6 +82,7 @@ private:
 	//std::vector< ID3D11Texture2D > textures;
 
 	unsigned int jointIndex;
+	std::vector<unsigned int> controlPointIndices;
 };
 
 

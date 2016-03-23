@@ -191,9 +191,9 @@ void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int win
 	hResult = device->CreateDepthStencilView(depthStencilPointer, NULL, &depthStencilViewport);
 
 	GetCursorPos(&prevMouseLoc);
-	lightDirection.x = 3.0f;
+	lightDirection.x = 0.0f;
 	lightDirection.y = -2.0f;
-	lightDirection.z = 3.0f;
+	lightDirection.z = 0.0f;
 	lightDirection.w = 0.0f;
 	XMStoreFloat4(&lightDirection, XMVector4Normalize(XMLoadFloat4(&lightDirection)));
 	for (size_t i = 0; i < Objects.size(); i++)
@@ -224,7 +224,7 @@ void Renderer::Initialize(HWND window, unsigned int windHeight, unsigned int win
 				{
 					for (unsigned int l = 0; l < Objects[i][j].GetSkeleton()[k].SkinWeight.size(); l++)
 					{
-						if (m == (unsigned int)Objects[i][j].GetSkeleton()[k].SkinWeight[l].BlendingIndex)
+						if (Objects[i][j].GetControlPointIndices()[m] == (unsigned int)Objects[i][j].GetSkeleton()[k].SkinWeight[l].BlendingIndex)
 						{
 							tempWeight.push_back(Objects[i][j].GetSkeleton()[k].SkinWeight[l].BlendingWeight);
 							tempIndexs.push_back(k);
@@ -635,7 +635,9 @@ void Renderer::Update()
 		for (unsigned int i = 0; i < Objects[0][0].GetSkeleton().size(); i++)
 		{
 			XMFLOAT4X4 temp;
-			XMStoreFloat4x4(&temp, XMMatrixMultiply(XMLoadFloat4x4(&Objects[0][0].GetSkeleton()[i].GlobalBind), XMLoadFloat4x4(&interp.world[i])));
+			temp = interp.world[i];
+			//temp._43 *= -1;
+			XMStoreFloat4x4(&temp, XMMatrixMultiply(XMLoadFloat4x4(&Objects[0][0].GetSkeleton()[i].GlobalBind), XMLoadFloat4x4(&temp)));
 			//animeVram->matrix[i] = interp.world[i];
 			animeVram->matrix[i] = temp;
 		}
@@ -647,7 +649,12 @@ void Renderer::Update()
 			for (unsigned int i = 0; itr; i++, itr = itr->next)
 			{
 				if (!(i == 6 || i == 21 || i == 31 || i == 36))
-					((RenderObject*)itr)->objectsWorld = interp.world[i];
+				{
+					XMFLOAT4X4 temp;
+					temp = interp.world[i];
+					//temp._43 *= -1;
+					((RenderObject*)itr)->objectsWorld = temp;
+				}
 			}
 		}
 		else
